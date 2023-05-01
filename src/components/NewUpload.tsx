@@ -146,7 +146,10 @@ export function NewUpload() {
         </div>
 
         <div className="self-end">
-          <button className="flex h-9 w-24 items-center justify-center rounded-full bg-gradient-to-r from-pink-600 via-red-500 to-[#ff6036] px-4 py-3 text-xs font-medium uppercase text-white">
+          <button
+            disabled={Boolean(selectedFile)}
+            className="flex h-9 w-24 items-center justify-center rounded-full bg-gradient-to-r from-pink-600 via-red-500 to-[#ff6036] px-4 py-3 text-xs font-medium uppercase text-white"
+          >
             {IsUploading ? (
               <Oval
                 ariaLabel="loading-indicator"
