@@ -1,5 +1,7 @@
 "use client";
 
+/**The code begins by importing various modules and components from different libraries and files. These imports provide functionality for handling file uploads, displaying progress bars, generating unique IDs, and rendering icons and loaders. */
+
 import { useRouter } from "next/navigation";
 import {
   ChangeEvent,
@@ -13,6 +15,7 @@ import {
   useTransition,
 } from "react";
 
+
 import { Uppy } from "@uppy/core";
 import Tus from "@uppy/tus";
 import ProgressBar from "@uppy/progress-bar";
@@ -21,17 +24,26 @@ import { generateVideoId } from "@/utils/generateVideoId";
 import { Oval } from "react-loader-spinner";
 import { Circle, HelpCircle, Image as ImageIcon, X } from "lucide-react";
 
+/** An instance of the Uppy class is created, which is a library used for handling file uploads. The instance is configured with debug mode enabled and automatic upload proceeding. */
+
 const uppy = new Uppy({ debug: true, autoProceed: true });
 
-export function NewUpload() {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [IsUploading, setIsUploading] = useState(false);
+/** A function component called NewUpload is defined. This component represents a form for uploading media files (images or videos). The component initializes several state variables using the useState hook */
 
+export function NewUpload() {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null); /**Stores the currently selected file for upload */
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null); /** Stores the URL of the preview image or video */
+  const [IsUploading, setIsUploading] = useState(false); /** Tracks the upload status (whether a file is being uploaded). */
+  const [email, setEmail] = useState("");
+
+  /** The useRouter hook is called to get access to the Next.js router, which allows for programmatic navigation.
+   The useTransition and useState hooks are used to handle transitions and manage a loading state.*/
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isFetching, setIsFetching] = useState(false);
 
+
+  /** The useEffect hook is used to listen for changes in the selectedFile and preview Url variables. When a selectedFile is available and the previewUrl starts with "data:video/", it adds the file to the uppy instance. */
   useEffect(() => {
     if (!selectedFile) return;
 
@@ -47,11 +59,16 @@ export function NewUpload() {
     }
   }, [selectedFile, previewUrl]);
 
+
+  /** The handleSubmit function is defined, which handles the form submission when the user clicks the "Publish" button. It prevents the default form submission behavior, sets the isUploading state to true, and proceeds if the previewUrl starts with "data:video/". It then configures the uppy instance to use the Tus plugin for resumable video uploads and the ProgressBar plugin for displaying the upload progress. It listens for the "complete" event, retrieves the uploaded file information, and performs a fetch request to the server to save the video URL and other data. Finally, it updates various states and triggers a route refresh. */
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsUploading(true);
 
     if (previewUrl?.startsWith("data:video/")) {
+      
+      console.log("Email:", email);
+
       if (!selectedFile) return;
 
       try {
@@ -111,12 +128,15 @@ export function NewUpload() {
     }
   }
 
+  /** The handleMediaSelected function is defined, which is called when a file is selected. It updates the selectedFile state with the selected file. */
   const handleMediaSelected = (file: File | null) => {
     setSelectedFile(file);
   };
 
+  /** The fileInputRef variable is created using the useRef hook to reference the file input element. */
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  /** The handleClearPreview function is defined, which clears the previewUrl and resets the file input value. */
   const handleClearPreview = () => {
     setPreviewUrl(null);
     if (fileInputRef.current) {
@@ -124,6 +144,7 @@ export function NewUpload() {
     }
   };
 
+  /** The handleButtonClick function is defined, which triggers a click event on the file input element. */
   const handleButtonClick = () => {
     if (fileInputRef.current) {
       fileInputRef.current.click();
@@ -167,6 +188,16 @@ export function NewUpload() {
         </div>
       </div>
       <div className="for-ProgressBar"></div>
+      <div className="flex items-center">
+        <label htmlFor="emailInput">Email:</label>
+        <input
+          type="email"
+          id="emailInput"
+          placeholder="Enter your email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          />
+      </div>
       <div className="relative">
         {previewUrl ? (
           <button
