@@ -161,7 +161,7 @@ export function NewUpload() {
                 secondaryColor="transparent"
               />
             ) : (
-              "Publicar"
+              "Publish"
             )}
           </button>
         </div>
