@@ -1,10 +1,20 @@
 // import { prisma } from '@/db'
 
+
+
+/* This "export const config..." code defines an object called "config".
+It contains configuration settings for an API endpoint.
+In this case, the bodyParser property is set to false, indicating that the API endpoint does not expect to receive any request body data.*/
 export const config = {
   api: {
     bodyParser: false,
   },
 };
+
+/* This code "type VideoData..." defines a custom type called "VideoData".
+It represents the structure or shape of an object that contains information about a video.
+Each property within the type specifies the name and data type of a specific piece of information about the video,
+such as its unique ID, creator, thumbnail, status, and more.*/
 
 type VideoData = {
   uid: string;
@@ -49,6 +59,9 @@ type VideoData = {
   publicDetails: null;
 };
 
+
+/* This line defines an asynchronous function called "POST".
+It is typically used in web development to handle HTTP POST requests, which are requests made by a client to send data to a server.*/
 export async function POST(request: Request) {
   const data = (await request.json()) as VideoData;
 
