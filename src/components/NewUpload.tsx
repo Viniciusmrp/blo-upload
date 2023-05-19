@@ -22,7 +22,7 @@ import ProgressBar from "@uppy/progress-bar";
 import "@uppy/progress-bar/dist/style.min.css";
 import { generateVideoId } from "@/utils/generateVideoId";
 import { Oval } from "react-loader-spinner";
-import { Circle, HelpCircle, Image as ImageIcon, X } from "lucide-react";
+import { Circle, HelpCircle, Image as ArrowUp, X } from "lucide-react";
 
 /** An instance of the Uppy class is created, which is a library used for handling file uploads. The instance is configured with debug mode enabled and automatic upload proceeding. */
 
@@ -251,7 +251,7 @@ const MediaInput = forwardRef<HTMLInputElement, MediaInputProps>(
     return (
       <div className="flex items-center">
         <button type="button" onClick={handleButtonClick}>
-          <ImageIcon color="#9ca3af" size={20} />
+          <ArrowUp color="#9ca3af" size={20} />
         </button>
         <input
           type="file"
