@@ -193,7 +193,7 @@ export function NewUpload() {
         <input
           type="email"
           id="emailInput"
-          placeholder="Enter your email"
+          placeholder="   Enter your email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           />
