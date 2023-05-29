@@ -23,10 +23,25 @@ import "@uppy/progress-bar/dist/style.min.css";
 import { generateVideoId } from "@/utils/generateVideoId";
 import { Oval } from "react-loader-spinner";
 import { Circle, HelpCircle, ArrowUp as Arrow, X } from "lucide-react";
+import { initializeApp } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore';
 
 /** An instance of the Uppy class is created, which is a library used for handling file uploads. The instance is configured with debug mode enabled and automatic upload proceeding. */
 
 const uppy = new Uppy({ debug: true, autoProceed: true });
+
+const firebaseConfig = {
+  apiKey: process.env.API_KEY,
+  authDomain: process.env.AUTH_DOMAIN,
+  projectId: process.env.PROJECT_ID,
+  storageBucket: process.env.STORAGE_BUCKET,
+  messagingSenderId: process.env.MESSAGING_SENDER_ID,
+  appId: process.env.APP_ID
+}
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 /** A function component called NewUpload is defined. This component represents a form for uploading media files (images or videos). The component initializes several state variables using the useState hook */
 
