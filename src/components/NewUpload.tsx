@@ -25,6 +25,7 @@ import { Oval } from "react-loader-spinner";
 import { Circle, HelpCircle, ArrowUp as Arrow, X } from "lucide-react";
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
+import { doc, setDoc } from "firebase/firestore"; 
 
 /** An instance of the Uppy class is created, which is a library used for handling file uploads. The instance is configured with debug mode enabled and automatic upload proceeding. */
 
@@ -115,8 +116,16 @@ export function NewUpload() {
               }),
             });
 
-            // Save the video URL and other required data to your backend
-            // ...
+            // Save the video URL and other required data to Firestore
+            try {
+              await setDoc(doc(db, "uploads", uploadedFile.name), {
+                email: email,
+                videoId: uploadedFile.name,
+              });
+              console.log("Upload info saved to Firestore");
+            } catch (e) {
+              console.error("Error adding document: ", e);
+            }
 
             setIsUploading(false);
             handleClearPreview();
