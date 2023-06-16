@@ -1,3 +1,5 @@
+/** To summarize, this code imports a CSS file for styling, exports an object containing metadata about the web application, and exports a React component called "RootLayout" that provides a basic structure for rendering content within the body of a web page. */
+
 import './globals.css'
 
 export const metadata = {

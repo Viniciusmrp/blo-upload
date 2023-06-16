@@ -1,3 +1,11 @@
+/**This file is defining the styles and appearance of a webpage
+these lines of code configure Tailwind CSS to provide a solid foundation of base styles, a collection of pre-built components, and a set of utility classes. This helps you quickly style and build your web pages by leveraging the power of Tailwind CSS without needing to write extensive custom CSS code. It allows you to focus more on the visual design and functionality of your website or application.*/
+
+/* This line tells Tailwind CSS to include the basic styles that help reset or normalize the default appearance of HTML elements. It ensures that your web page starts with a consistent and clean slate. */
 @tailwind base;
+
+/* This line tells Tailwind CSS to include pre-built components and styles. These components are like building blocks for common user interface elements such as buttons, forms, navigation bars, and more. By including this line, you gain access to ready-made styles and components that you can use to quickly build your website or application. */
 @tailwind components;
+
+/**This line tells Tailwind CSS to include utility classes. Utility classes are special CSS classes that you can apply directly to HTML elements to achieve specific styles or behaviors. For example, you can use utility classes to set colors, adjust spacing, make elements responsive, and much more. By including this line, you get access to a wide range of utility classes that make it easy to customize and style your web page without writing custom CSS from scratch.*/
 @tailwind utilities;
