@@ -51,6 +51,9 @@ export function NewUpload() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null); /** Stores the URL of the preview image or video */
   const [IsUploading, setIsUploading] = useState(false); /** Tracks the upload status (whether a file is being uploaded). */
   const [email, setEmail] = useState("");
+  const [weight, setWeight] = useState(""); // Weight field
+  const [sizeReference, setSizeReference] = useState(""); // Size Reference field
+
 
   /** The useRouter hook is called to get access to the Next.js router, which allows for programmatic navigation.
    The useTransition and useState hooks are used to handle transitions and manage a loading state.*/
@@ -222,6 +225,26 @@ export function NewUpload() {
           onChange={(e) => setEmail(e.target.value)}
           />
       </div>
+      <div className="flex items-center"> {/* Weight field */}
+        <label htmlFor="weightInput">Weight:</label>
+        <input
+          type="text"
+          id="weightInput"
+          placeholder="   Enter the weight"
+          value={weight}
+          onChange={(e) => setWeight(e.target.value)}
+        />
+      </div>
+      <div className="flex items-center"> {/* Size Reference field */}
+        <label htmlFor="sizeReferenceInput">Size Reference:</label>
+        <input
+          type="text"
+          id="sizeReferenceInput"
+          placeholder="   Enter the size reference"
+          value={sizeReference}
+          onChange={(e) => setSizeReference(e.target.value)}
+        />
+</div>
       <div className="relative">
         {previewUrl ? (
           <button
