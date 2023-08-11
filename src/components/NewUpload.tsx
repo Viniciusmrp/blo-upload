@@ -108,19 +108,6 @@ export function NewUpload() {
             uppy.removeFile(uploadedFile.id);
             console.log("Uploaded video:", uploadedFile);
 
-            await fetch(`${window.location.origin}/api/new-post`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                data: {
-                  type: "postWithSmallVideo",
-                  videoId: uploadedFile.name,
-                },
-              }),
-            });
-
             // Save the video URL and other required data to Firestore
             try {
               await setDoc(doc(db, "uploads", uploadedFile.name), {
