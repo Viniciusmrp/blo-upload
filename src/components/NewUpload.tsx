@@ -116,6 +116,7 @@ export function NewUpload() {
               await setDoc(doc(db, "uploads", uploadedFile.name), {
                 email: email,
                 videoId: uploadedFile.name,
+                cloudflareIdentifier: identifier
               });
               console.log("Upload info saved to Firestore");
             } catch (e) {
