@@ -105,6 +105,8 @@ export function NewUpload() {
           .on("complete", async (result) => {
             const { successful } = result;
             const uploadedFile = successful[0];
+            // Log the entire response object to inspect its structure
+            console.log("Complete response:", result);
             uppy.removeFile(uploadedFile.id);
             console.log("Uploaded video:", uploadedFile);
 
