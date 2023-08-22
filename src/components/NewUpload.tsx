@@ -105,6 +105,9 @@ export function NewUpload() {
           .on("complete", async (result) => {
             const { successful } = result;
             const uploadedFile = successful[0];
+            const uploadedURL = uploadedFile.uploadURL;
+            const identifier = uploadedURL.split('/').slice(-1)[0].split('?')[0];
+            console.log("Extracted Identifier:", identifier);
             uppy.removeFile(uploadedFile.id);
             console.log("Uploaded video:", uploadedFile);
 
@@ -113,6 +116,7 @@ export function NewUpload() {
               await setDoc(doc(db, "uploads", uploadedFile.name), {
                 email: email,
                 videoId: uploadedFile.name,
+                cloudflareIdentifier: identifier
               });
               console.log("Upload info saved to Firestore");
             } catch (e) {
