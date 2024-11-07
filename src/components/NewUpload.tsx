@@ -144,4 +144,6 @@ const NewUpload = () => {
   );
 };
 
+export { NewUpload };
+
 export default NewUpload;
