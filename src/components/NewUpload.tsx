@@ -18,6 +18,9 @@ const NewUpload = () => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [email, setEmail] = useState("");
+  const [weight, setWeight] = useState("");
+  const [height, setHeight] = useState("");
+  const [load, setLoad] = useState("");
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -139,6 +142,50 @@ const NewUpload = () => {
             )}
           </div>
         )}
+      </div>
+      <div className="flex items-center mt-4">
+        <label htmlFor="emailInput" className="mr-2">Email:</label>
+        <input
+          type="email"
+          id="emailInput"
+          placeholder="Enter your email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="border p-1"
+        />
+      </div>
+      <div className="flex items-center mt-4">
+        <label htmlFor="weightInput" className="mr-2">Weight:</label>
+        <input
+          type="text"
+          id="weightInput"
+          placeholder="Enter weight"
+          value={weight}
+          onChange={(e) => setWeight(e.target.value)}
+          className="border p-1"
+        />
+      </div>
+      <div className="flex items-center mt-4">
+        <label htmlFor="heightInput" className="mr-2">Height:</label>
+        <input
+          type="text"
+          id="heightInput"
+          placeholder="Enter height"
+          value={height}
+          onChange={(e) => setHeight(e.target.value)}
+          className="border p-1"
+        />
+      </div>
+      <div className="flex items-center mt-4">
+        <label htmlFor="loadInput" className="mr-2">Load:</label>
+        <input
+          type="text"
+          id="loadInput"
+          placeholder="Enter load"
+          value={load}
+          onChange={(e) => setLoad(e.target.value)}
+          className="border p-1"
+        />
       </div>
     </form>
   );
