@@ -1,7 +1,5 @@
 // import { prisma } from '@/db'
 
-
-
 /* This "export const config..." code defines an object called "config".
 It contains configuration settings for an API endpoint.
 In this case, the bodyParser property is set to false, indicating that the API endpoint does not expect to receive any request body data.*/

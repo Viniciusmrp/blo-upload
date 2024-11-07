@@ -1,0 +1,3 @@
+settings.json is configuring the settings specific to the project in VS Code.
+These settings override the global settings of VS Code for that particular project.
+The second part of the line tells to use the project typescript SDK settings instead of the global ones.
