@@ -56,7 +56,7 @@ const NewUpload = () => {
           "Content-Type": selectedFile.type,
         },
       });
-
+      console.log("Signed URL:", signedUrl);
       console.log("Video uploaded successfully");
 
       setIsUploading(false);
