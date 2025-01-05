@@ -53,7 +53,7 @@ const NewUpload = () => {
       // Step 2: Upload video to Google Cloud Storage using signed URL
       await axios.put(signedUrl, selectedFile, {
         headers: {
-          "Content-Type": selectedFile.type,
+          "Content-Type": "video/mp4",
         },
       });
       console.log("Signed URL:", signedUrl);
