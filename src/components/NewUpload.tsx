@@ -1,3 +1,5 @@
+// Updated code for displaying a video miniature after upload
+
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -28,10 +30,15 @@ const NewUpload = () => {
   useEffect(() => {
     if (!selectedFile) return;
 
-    if (previewUrl?.startsWith("data:video/")) {
-      setPreviewUrl(URL.createObjectURL(selectedFile));
-    }
-  }, [selectedFile, previewUrl]);
+    // Create a preview URL for the uploaded video
+    const url = URL.createObjectURL(selectedFile);
+    setPreviewUrl(url);
+
+    // Clean up URL object when the component is unmounted or file changes
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [selectedFile]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -40,7 +47,6 @@ const NewUpload = () => {
     if (!selectedFile) return;
 
     try {
-      // Step 1: Get signed URL from backend
       const response = await axios.post(
         "https://my-flask-app-service-309448793861.us-central1.run.app/generate-signed-url",
         {
@@ -50,13 +56,12 @@ const NewUpload = () => {
 
       const signedUrl = response.data.url;
 
-      // Step 2: Upload video to Google Cloud Storage using signed URL
       await axios.put(signedUrl, selectedFile, {
         headers: {
           "Content-Type": "video/mp4",
         },
       });
-      
+
       console.log("Video uploaded successfully");
 
       setIsUploading(false);
@@ -78,6 +83,7 @@ const NewUpload = () => {
 
   const handleClearPreview = () => {
     setPreviewUrl(null);
+    setSelectedFile(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -128,20 +134,15 @@ const NewUpload = () => {
       </div>
       <div className="relative">
         {previewUrl ? (
-          <button
-            className="absolute top-2 right-2 z-10"
-            onClick={handleClearPreview}
-          >
-            <X color="#9ca3af" size={20} />
-          </button>
-        ) : null}
-        {previewUrl && (
-          <div>
-            {previewUrl.startsWith("data:video/") && (
-              <video src={previewUrl} controls style={{ maxWidth: "100%" }} />
-            )}
+          <div className="mt-4">
+            <p>Video Preview:</p>
+            <video
+              src={previewUrl}
+              controls
+              style={{ width: "100%", maxHeight: "300px" }}
+            />
           </div>
-        )}
+        ) : null}
       </div>
       <div className="flex items-center mt-4">
         <label htmlFor="emailInput" className="mr-2">Email:</label>
