@@ -1,4 +1,4 @@
-// Updated code for displaying a video miniature after upload
+// Updated code for clearing fields and showing success message
 
 "use client";
 
@@ -23,6 +23,7 @@ const NewUpload = () => {
   const [weight, setWeight] = useState("");
   const [height, setHeight] = useState("");
   const [load, setLoad] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -66,6 +67,16 @@ const NewUpload = () => {
 
       setIsUploading(false);
       handleClearPreview();
+
+      // Clear fields
+      setEmail("");
+      setWeight("");
+      setHeight("");
+      setLoad("");
+
+      // Show success message
+      setSuccessMessage("Video uploaded successfully");
+      setTimeout(() => setSuccessMessage(""), 3000);
 
       startTransition(() => {
         router.refresh();
@@ -132,6 +143,9 @@ const NewUpload = () => {
           </button>
         </div>
       </div>
+      {successMessage && (
+        <div className="text-green-600 mt-4">{successMessage}</div>
+      )}
       <div className="relative">
         {previewUrl ? (
           <div className="mt-4">
