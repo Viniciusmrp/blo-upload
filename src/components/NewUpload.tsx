@@ -1,4 +1,4 @@
-// Updated code for clearing fields and showing success message
+// Updated code to save user input data to Firebase with environment variables
 
 "use client";
 
@@ -14,6 +14,22 @@ import {
 import axios from "axios";
 import { Oval } from "react-loader-spinner";
 import { ArrowUp as Arrow, X } from "lucide-react";
+import { getFirestore, collection, addDoc } from "firebase/firestore";
+import { initializeApp } from "firebase/app";
+
+// Firebase configuration using environment variables
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 const NewUpload = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -65,6 +81,16 @@ const NewUpload = () => {
 
       console.log("Video uploaded successfully");
 
+      // Save user data to Firebase
+      await addDoc(collection(db, "userVideos"), {
+        email,
+        weight,
+        height,
+        load,
+        videoName: selectedFile.name,
+        uploadedAt: new Date().toISOString(),
+      });
+
       setIsUploading(false);
       handleClearPreview();
 
@@ -75,14 +101,14 @@ const NewUpload = () => {
       setLoad("");
 
       // Show success message
-      setSuccessMessage("Video uploaded successfully");
+      setSuccessMessage("Video uploaded successfully and data saved.");
       setTimeout(() => setSuccessMessage(""), 3000);
 
       startTransition(() => {
         router.refresh();
       });
     } catch (error) {
-      console.error("Error uploading video:", error);
+      console.error("Error uploading video or saving data:", error);
       setIsUploading(false);
     }
   };
