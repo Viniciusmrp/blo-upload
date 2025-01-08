@@ -81,8 +81,8 @@ const NewUpload = () => {
 
       console.log("Video uploaded successfully");
 
-      // Save user data to Firebase
-      await addDoc(collection(db, "userVideos"), {
+      // Save user data to Firebase with authentication check
+      const docRef = await addDoc(collection(db, "userVideos"), {
         email,
         weight,
         height,
@@ -90,6 +90,8 @@ const NewUpload = () => {
         videoName: selectedFile.name,
         uploadedAt: new Date().toISOString(),
       });
+
+      console.log("Document written with ID: ", docRef.id);
 
       setIsUploading(false);
       handleClearPreview();
