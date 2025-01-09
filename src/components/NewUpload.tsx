@@ -16,6 +16,7 @@ import { Oval } from "react-loader-spinner";
 import { ArrowUp as Arrow, X } from "lucide-react";
 import { getFirestore, collection, setDoc, doc } from "firebase/firestore";
 import { initializeApp } from "firebase/app";
+import { v4 as uuidv4 } from 'uuid';
 
 // Firebase configuration using environment variables
 const firebaseConfig = {
@@ -64,14 +65,13 @@ const NewUpload = () => {
     if (!selectedFile) return;
 
     try {
-      const uniqueId = selectedFile.name.includes(".") 
-        ? selectedFile.name.split(".")[0] 
-        : selectedFile.name; // Use file name (without extension) or fallback to full name
+      const uniqueId = uuidv4(); // Generate a unique ID for the video and Firestore document
+      const fileName = `${uniqueId}.mp4`; // Ensure unique file name
 
       const response = await axios.post(
         "https://my-flask-app-service-309448793861.us-central1.run.app/generate-signed-url",
         {
-          file_name: selectedFile.name,
+          file_name: fileName,
         }
       );
 
@@ -85,13 +85,13 @@ const NewUpload = () => {
 
       console.log("Video uploaded successfully");
 
-      // Save user data to Firestore with the same ID as the video file
+      // Save user data to Firestore with the unique ID
       await setDoc(doc(db, "userVideos", uniqueId), {
         email,
         weight,
         height,
         load,
-        videoName: selectedFile.name,
+        videoName: fileName,
         uploadedAt: new Date().toISOString(),
       });
 
