@@ -14,7 +14,7 @@ import {
 import axios from "axios";
 import { Oval } from "react-loader-spinner";
 import { ArrowUp as Arrow, X } from "lucide-react";
-import { getFirestore, collection, addDoc } from "firebase/firestore";
+import { getFirestore, collection, setDoc, doc } from "firebase/firestore";
 import { initializeApp } from "firebase/app";
 
 // Firebase configuration using environment variables
@@ -26,7 +26,6 @@ const firebaseConfig = {
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
-console.log("Firebase Config:", firebaseConfig);
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -65,6 +64,10 @@ const NewUpload = () => {
     if (!selectedFile) return;
 
     try {
+      const uniqueId = selectedFile.name.includes(".") 
+        ? selectedFile.name.split(".")[0] 
+        : selectedFile.name; // Use file name (without extension) or fallback to full name
+
       const response = await axios.post(
         "https://my-flask-app-service-309448793861.us-central1.run.app/generate-signed-url",
         {
@@ -82,8 +85,8 @@ const NewUpload = () => {
 
       console.log("Video uploaded successfully");
 
-      // Save user data to Firebase with authentication check
-      const docRef = await addDoc(collection(db, "userVideos"), {
+      // Save user data to Firestore with the same ID as the video file
+      await setDoc(doc(db, "userVideos", uniqueId), {
         email,
         weight,
         height,
@@ -92,7 +95,7 @@ const NewUpload = () => {
         uploadedAt: new Date().toISOString(),
       });
 
-      console.log("Document written with ID: ", docRef.id);
+      console.log("Document written with ID: ", uniqueId);
 
       setIsUploading(false);
       handleClearPreview();
