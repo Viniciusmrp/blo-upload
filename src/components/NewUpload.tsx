@@ -16,7 +16,7 @@ import { Oval } from "react-loader-spinner";
 import { ArrowUp as Arrow, X } from "lucide-react";
 import { getFirestore, collection, setDoc, doc } from "firebase/firestore";
 import { initializeApp } from "firebase/app";
-import { v4 as uuidv4 } from 'uuid';
+import { generateVideoId } from "../utils/generateVideoId";
 
 // Firebase configuration using environment variables
 const firebaseConfig = {
@@ -65,7 +65,7 @@ const NewUpload = () => {
     if (!selectedFile) return;
 
     try {
-      const uniqueId = uuidv4(); // Generate a unique ID for the video and Firestore document
+      const uniqueId = generateVideoId(); // Generate a unique ID for the video and Firestore document
       const fileName = `${uniqueId}.mp4`; // Ensure unique file name
 
       const response = await axios.post(
