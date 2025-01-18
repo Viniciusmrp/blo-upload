@@ -1,5 +1,3 @@
-// Updated code to save user input data to Firebase with environment variables
-
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -13,24 +11,8 @@ import {
 } from "react";
 import axios from "axios";
 import { Oval } from "react-loader-spinner";
-import { ArrowUp as Arrow, X } from "lucide-react";
-import { getFirestore, collection, setDoc, doc } from "firebase/firestore";
-import { initializeApp } from "firebase/app";
+import { ArrowUp as Arrow } from "lucide-react";
 import { generateVideoId } from "../utils/generateVideoId";
-
-// Firebase configuration using environment variables
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
 
 const NewUpload = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -62,12 +44,17 @@ const NewUpload = () => {
     event.preventDefault();
     setIsUploading(true);
 
-    if (!selectedFile) return;
+    if (!selectedFile) {
+      console.error("No file selected.");
+      setIsUploading(false);
+      return;
+    }
 
     try {
-      const uniqueId = generateVideoId(); // Generate a unique ID for the video and Firestore document
+      const uniqueId = generateVideoId(); // Generate a unique ID for the video
       const fileName = `${uniqueId}.mp4`; // Ensure unique file name
 
+      // Request a signed URL from the backend
       const response = await axios.post(
         "https://my-flask-app-service-309448793861.us-central1.run.app/generate-signed-url",
         {
@@ -77,6 +64,7 @@ const NewUpload = () => {
 
       const signedUrl = response.data.url;
 
+      // Upload the video file to GCS
       await axios.put(signedUrl, selectedFile, {
         headers: {
           "Content-Type": "video/mp4",
@@ -85,17 +73,19 @@ const NewUpload = () => {
 
       console.log("Video uploaded successfully");
 
-      // Save user data to Firestore with the unique ID
-      await setDoc(doc(db, "userVideos", uniqueId), {
-        email,
-        weight,
-        height,
-        load,
-        videoName: fileName,
-        uploadedAt: new Date().toISOString(),
-      });
+      // Save video metadata to the backend
+      await axios.post(
+        "https://my-flask-app-service-309448793861.us-central1.run.app/save-video-info",
+        {
+          email,
+          weight,
+          height,
+          load,
+          videoName: fileName,
+        }
+      );
 
-      console.log("Document written with ID: ", uniqueId);
+      console.log("Video metadata saved successfully");
 
       setIsUploading(false);
       handleClearPreview();
@@ -107,14 +97,14 @@ const NewUpload = () => {
       setLoad("");
 
       // Show success message
-      setSuccessMessage("Video uploaded successfully and data saved.");
+      setSuccessMessage("Video uploaded successfully and metadata saved.");
       setTimeout(() => setSuccessMessage(""), 3000);
 
       startTransition(() => {
         router.refresh();
       });
     } catch (error) {
-      console.error("Error uploading video or saving data:", error);
+      console.error("Error uploading video or saving metadata:", error);
       setIsUploading(false);
     }
   };
