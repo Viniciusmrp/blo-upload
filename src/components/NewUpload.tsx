@@ -54,26 +54,8 @@ const NewUpload = () => {
       const uniqueId = generateVideoId(); // Generate a unique ID for the video
       const fileName = `${uniqueId}.mp4`; // Ensure unique file name
 
-      // Request a signed URL from the backend
-      const response = await axios.post(
-        "https://my-flask-app-service-309448793861.us-central1.run.app/generate-signed-url",
-        {
-          file_name: fileName,
-        }
-      );
-
-      const signedUrl = response.data.url;
-
-      // Upload the video file to GCS
-      await axios.put(signedUrl, selectedFile, {
-        headers: {
-          "Content-Type": "video/mp4",
-        },
-      });
-
-      console.log("Video uploaded successfully");
-
-      // Save video metadata to the backend
+      // ✅ Step 1: Save metadata first
+      console.log("Saving metadata first...");
       await axios.post(
         "https://my-flask-app-service-309448793861.us-central1.run.app/save-video-info",
         {
@@ -84,8 +66,24 @@ const NewUpload = () => {
           videoName: fileName,
         }
       );
+      console.log("Metadata saved successfully!");
 
-      console.log("Video metadata saved successfully");
+      // ✅ Step 2: Request a signed URL from the backend
+      console.log("Requesting signed URL...");
+      const response = await axios.post(
+        "https://my-flask-app-service-309448793861.us-central1.run.app/generate-signed-url",
+        { file_name: fileName }
+      );
+
+      const signedUrl = response.data.url;
+
+      // ✅ Step 3: Upload the video file to GCS
+      console.log("Uploading video...");
+      await axios.put(signedUrl, selectedFile, {
+        headers: { "Content-Type": "video/mp4" },
+      });
+
+      console.log("Video uploaded successfully!");
 
       setIsUploading(false);
       handleClearPreview();
