@@ -105,6 +105,7 @@ const NewUpload = () => {
           height,
           load,
           videoName: fileName,
+          isPortrait
         }
       );
 
@@ -150,9 +151,23 @@ const NewUpload = () => {
     handleClearPreview();
   };
 
+  const [isPortrait, setIsPortrait] = useState(false);  // Add this state at the top
+
   const handleMediaSelected = (event: ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = event.target.files?.[0] ?? null;
-    setSelectedFile(selectedFile);
+    const file = event.target.files?.[0] ?? null;
+    if (file) {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      
+      video.onloadedmetadata = () => {
+        const isPortrait = video.videoHeight > video.videoWidth;
+        setIsPortrait(isPortrait);
+        setSelectedFile(file);
+        URL.revokeObjectURL(video.src);
+      };
+      
+      video.src = URL.createObjectURL(file);
+    }
     setUploadStatus('idle');
     setErrorMessage('');
   };
