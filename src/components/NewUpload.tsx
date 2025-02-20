@@ -1,5 +1,5 @@
 "use client";
-
+import ExerciseAnalysis from './ExerciseAnalysis';
 import { useRouter } from "next/navigation";
 import {
   ChangeEvent,
@@ -13,6 +13,14 @@ import axios from "axios";
 import { Oval } from "react-loader-spinner";
 import { ArrowUp as Arrow, CheckCircle } from "lucide-react";
 import { generateVideoId } from "../utils/generateVideoId";
+
+interface AnalysisData {
+  status: string;
+  average_score?: number;
+  total_reps?: number;
+  rep_scores?: Array<any>;
+  feedback?: string[];
+}
 
 const NewUpload = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -31,6 +39,8 @@ const NewUpload = () => {
   const [isPending, startTransition] = useTransition();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pollInterval = useRef<NodeJS.Timeout>();
+
+  const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
 
   useEffect(() => {
     if (!selectedFile) return;
@@ -63,6 +73,17 @@ const NewUpload = () => {
         if (response.data.status === 'complete') {
           setUploadStatus('complete');
           setProcessedVideoUrl(response.data.processed_url);
+
+          try {
+            const videoId = videoName.split('.')[0];
+            const analysisResponse = await axios.get(
+              `https://my-flask-app-service-309448793861.us-central1.run.app/exercise-analysis/${videoId}`
+            );
+            setAnalysisData(analysisResponse.data);
+          } catch (error) {
+            console.error('Error fetching analysis:', error);
+          }
+
           clearInterval(pollInterval.current);
         } else if (response.data.status === 'error') {
           setUploadStatus('error');
@@ -290,6 +311,11 @@ const NewUpload = () => {
           </div>
         ) : null}
       </div>
+
+      {/* Exercise Analysis Section */}
+      {uploadStatus === 'complete' && analysisData && (
+        <ExerciseAnalysis analysisData={analysisData} />
+      )}
 
       {/* Form Fields */}
       <div className="space-y-4 mt-4">
