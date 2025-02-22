@@ -1,170 +1,206 @@
 "use client";
-
-/**The code begins by importing various modules and components from different libraries and files. These imports provide functionality for handling file uploads, displaying progress bars, generating unique IDs, and rendering icons and loaders. */
-
+import ExerciseAnalysis from './ExerciseAnalysis';
 import { useRouter } from "next/navigation";
 import {
   ChangeEvent,
-  Dispatch,
   FormEvent,
-  forwardRef,
-  SetStateAction,
   useEffect,
   useRef,
   useState,
   useTransition,
 } from "react";
-
-
-import { Uppy } from "@uppy/core";
-import Tus from "@uppy/tus";
-import ProgressBar from "@uppy/progress-bar";
-import "@uppy/progress-bar/dist/style.min.css";
-import { generateVideoId } from "@/utils/generateVideoId";
+import axios from "axios";
 import { Oval } from "react-loader-spinner";
-import { Circle, HelpCircle, ArrowUp as Arrow, X } from "lucide-react";
-import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
-import { doc, setDoc } from "firebase/firestore"; 
+import { ArrowUp as Arrow, CheckCircle } from "lucide-react";
+import { generateVideoId } from "../utils/generateVideoId";
 
-/** An instance of the Uppy class is created, which is a library used for handling file uploads. The instance is configured with debug mode enabled and automatic upload proceeding. */
-
-const uppy = new Uppy({ debug: true, autoProceed: true });
-
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_APP_ID
+interface AnalysisData {
+  status: string;
+  average_score?: number;
+  total_reps?: number;
+  rep_scores?: Array<any>;
+  feedback?: string[];
 }
 
-console.log(firebaseConfig);
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-/** A function component called NewUpload is defined. This component represents a form for uploading media files (images or videos). The component initializes several state variables using the useState hook */
-
-export function NewUpload() {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null); /**Stores the currently selected file for upload */
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null); /** Stores the URL of the preview image or video */
-  const [IsUploading, setIsUploading] = useState(false); /** Tracks the upload status (whether a file is being uploaded). */
+const NewUpload = () => {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'processing' | 'complete' | 'error'>('idle');
   const [email, setEmail] = useState("");
-  const [weight, setWeight] = useState(""); // Weight field
-  const [sizeReference, setSizeReference] = useState(""); // Size Reference field
-
-
-  /** The useRouter hook is called to get access to the Next.js router, which allows for programmatic navigation.
-   The useTransition and useState hooks are used to handle transitions and manage a loading state.*/
+  const [weight, setWeight] = useState("");
+  const [height, setHeight] = useState("");
+  const [load, setLoad] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [processedVideoUrl, setProcessedVideoUrl] = useState<string | null>(null);
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [isFetching, setIsFetching] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const pollInterval = useRef<NodeJS.Timeout>();
 
+  const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
 
-  /** The useEffect hook is used to listen for changes in the selectedFile and preview Url variables. When a selectedFile is available and the previewUrl starts with "data:video/", it adds the file to the uppy instance. */
   useEffect(() => {
     if (!selectedFile) return;
 
-    if (previewUrl?.startsWith("data:video/")) {
-      uppy.addFile({
-        name: generateVideoId(),
-        type: selectedFile.type,
-        data: selectedFile,
-        meta: {
-          name: selectedFile.name,
-        },
-      });
-    }
-  }, [selectedFile, previewUrl]);
+    const url = URL.createObjectURL(selectedFile);
+    setPreviewUrl(url);
 
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [selectedFile]);
 
-  /** The handleSubmit function is defined, which handles the form submission when the user clicks the "Publish" button. It prevents the default form submission behavior, sets the isUploading state to true, and proceeds if the previewUrl starts with "data:video/". It then configures the uppy instance to use the Tus plugin for resumable video uploads and the ProgressBar plugin for displaying the upload progress. It listens for the "complete" event, retrieves the uploaded file information, and performs a fetch request to the server to save the video URL and other data. Finally, it updates various states and triggers a route refresh. */
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setIsUploading(true);
-
-    if (previewUrl?.startsWith("data:video/")) {
-      
-      console.log("Email:", email);
-
-      if (!selectedFile) return;
-
-      try {
-        uppy
-          .use(Tus, {
-            endpoint: `/api/cloudflare/video-upload`,
-            chunkSize: 150 * 1024 * 1024,
-          })
-          .use(ProgressBar, {
-            target: ".for-ProgressBar",
-            hideAfterFinish: false,
-          })
-          .on("complete", async (result) => {
-            const { successful } = result;
-            const uploadedFile = successful[0];
-            const uploadedURL = uploadedFile.uploadURL;
-            const identifier = uploadedURL.split('/').slice(-1)[0].split('?')[0];
-            console.log("Extracted Identifier:", identifier);
-            uppy.removeFile(uploadedFile.id);
-            console.log("Uploaded video:", uploadedFile);
-
-            // Save the video URL and other required data to Firestore
-            try {
-              await setDoc(doc(db, "uploads", uploadedFile.name), {
-                email: email,
-                videoId: uploadedFile.name,
-                cloudflareIdentifier: identifier
-              });
-              console.log("Upload info saved to Firestore");
-            } catch (e) {
-              console.error("Error adding document: ", e);
-            }
-
-            setIsUploading(false);
-            handleClearPreview();
-
-            startTransition(() => {
-              // Refresh the current route:
-              // - Makes a new request to the server for the route
-              // - Re-fetches data requests and re-renders Server Components
-              // - Sends the updated React Server Component payload to the client
-              // - The client merges the payload without losing unaffected
-              //   client-side React state or browser state
-              router.refresh();
-
-              // Note: If fetch requests are cached, the updated data will
-              // produce the same result.
-            });
-          });
-
-        await uppy.upload();
-      } catch (error) {
-        console.error("ERROR", error);
-        setSelectedFile(null);
+  useEffect(() => {
+    return () => {
+      if (pollInterval.current) {
+        clearInterval(pollInterval.current);
       }
-    }
-  }
+    };
+  }, []);
 
-  /** The handleMediaSelected function is defined, which is called when a file is selected. It updates the selectedFile state with the selected file. */
-  const handleMediaSelected = (file: File | null) => {
-    setSelectedFile(file);
+  const startPollingForProcessing = async (videoName: string) => {
+    setUploadStatus('processing');
+    
+    const checkStatus = async () => {
+      try {
+        const response = await axios.get(
+          `https://my-flask-app-service-309448793861.us-central1.run.app/video-status/${videoName}`
+        );
+        
+        if (response.data.status === 'complete') {
+          setUploadStatus('complete');
+          setProcessedVideoUrl(response.data.processed_url);
+
+          try {
+            const videoId = videoName.split('.')[0];
+            const analysisResponse = await axios.get(
+              `https://my-flask-app-service-309448793861.us-central1.run.app/exercise-analysis/${videoId}`
+            );
+            setAnalysisData(analysisResponse.data);
+          } catch (error) {
+            console.error('Error fetching analysis:', error);
+          }
+
+          clearInterval(pollInterval.current);
+        } else if (response.data.status === 'error') {
+          setUploadStatus('error');
+          setErrorMessage('Video processing failed');
+          clearInterval(pollInterval.current);
+        }
+      } catch (error) {
+        console.error('Error checking video status:', error);
+      }
+    };
+
+    // Poll every 5 seconds
+    pollInterval.current = setInterval(checkStatus, 5000);
+    // Initial check
+    checkStatus();
   };
 
-  /** The fileInputRef variable is created using the useRef hook to reference the file input element. */
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsUploading(true);
+    setUploadStatus('uploading');
+    setUploadProgress(0);
+    setErrorMessage('');
 
-  /** The handleClearPreview function is defined, which clears the previewUrl and resets the file input value. */
+    if (!selectedFile) {
+      setErrorMessage('No file selected.');
+      setIsUploading(false);
+      return;
+    }
+
+    try {
+      const uniqueId = generateVideoId();
+      const fileName = `${uniqueId}.mp4`;
+
+      await axios.post(
+        "https://my-flask-app-service-309448793861.us-central1.run.app/save-video-info",
+        {
+          email,
+          weight,
+          height,
+          load,
+          videoName: fileName,
+          isPortrait
+        }
+      );
+
+      const response = await axios.post(
+        "https://my-flask-app-service-309448793861.us-central1.run.app/generate-signed-url",
+        { file_name: fileName }
+      );
+
+      const signedUrl = response.data.url;
+
+      await axios.put(signedUrl, selectedFile, {
+        headers: { "Content-Type": "video/mp4" },
+        onUploadProgress: (progressEvent) => {
+          const progress = progressEvent.total
+            ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
+            : 0;
+          setUploadProgress(progress);
+        },
+      });
+
+      // Start polling for processing status
+      startPollingForProcessing(fileName);
+
+      setIsUploading(false);
+      clearFormData();
+      
+      startTransition(() => {
+        router.refresh();
+      });
+    } catch (error) {
+      console.error("Error uploading video or saving metadata:", error);
+      setErrorMessage('Error uploading video. Please try again.');
+      setIsUploading(false);
+      setUploadStatus('error');
+    }
+  };
+
+  const clearFormData = () => {
+    setEmail("");
+    setWeight("");
+    setHeight("");
+    setLoad("");
+    handleClearPreview();
+  };
+
+  const [isPortrait, setIsPortrait] = useState(false);  // Add this state at the top
+
+  const handleMediaSelected = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+    if (file) {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      
+      video.onloadedmetadata = () => {
+        const isPortrait = video.videoHeight > video.videoWidth;
+        setIsPortrait(isPortrait);
+        setSelectedFile(file);
+        URL.revokeObjectURL(video.src);
+      };
+      
+      video.src = URL.createObjectURL(file);
+    }
+    setUploadStatus('idle');
+    setErrorMessage('');
+  };
+
   const handleClearPreview = () => {
     setPreviewUrl(null);
+    setSelectedFile(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   };
 
-  /** The handleButtonClick function is defined, which triggers a click event on the file input element. */
   const handleButtonClick = () => {
     if (fileInputRef.current) {
       fileInputRef.current.click();
@@ -172,26 +208,27 @@ export function NewUpload() {
   };
 
   return (
-    <form
-      onSubmit={(e) => handleSubmit(e)}
-      className="border-b border-gray-200"
-    >
+    <form onSubmit={handleSubmit} className="border-b border-gray-200">
       <div className="flex items-center justify-between border-b px-4 py-2">
         <div className="flex items-center gap-x-5">
-          <MediaInput
-            handleButtonClick={handleButtonClick}
+          <button type="button" onClick={handleButtonClick}>
+            <Arrow color="#9ca3af" size={20} />
+          </button>
+          <input
+            type="file"
+            accept="video/*"
+            onChange={handleMediaSelected}
             ref={fileInputRef}
-            onSelected={handleMediaSelected}
-            setPreviewUrl={setPreviewUrl}
+            style={{ display: "none" }}
           />
         </div>
 
         <div className="self-end">
           <button
-            disabled={Boolean(selectedFile === null || IsUploading)}
-            className="flex h-9 w-24 items-center justify-center rounded-full bg-gradient-to-r from-pink-600 via-red-500 to-[#ff6036] px-4 py-3 text-xs font-medium uppercase text-white"
+            disabled={Boolean(selectedFile === null || isUploading)}
+            className="flex h-9 w-24 items-center justify-center rounded-full bg-gradient-to-r from-pink-600 via-red-500 to-[#ff6036] px-4 py-3 text-xs font-medium uppercase text-white disabled:opacity-50"
           >
-            {IsUploading ? (
+            {isUploading ? (
               <Oval
                 ariaLabel="loading-indicator"
                 height={16}
@@ -207,102 +244,130 @@ export function NewUpload() {
           </button>
         </div>
       </div>
-      <div className="for-ProgressBar"></div>
-      <div className="flex items-center">
-        <label htmlFor="emailInput">Email:</label>
-        <input
-          type="email"
-          id="emailInput"
-          placeholder="   Enter your email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          />
-      </div>
-      <div className="flex items-center"> {/* Weight field */}
-        <label htmlFor="weightInput">Weight:</label>
-        <input
-          type="text"
-          id="weightInput"
-          placeholder="   Enter the weight"
-          value={weight}
-          onChange={(e) => setWeight(e.target.value)}
-        />
-      </div>
-      <div className="flex items-center"> {/* Size Reference field */}
-        <label htmlFor="sizeReferenceInput">Size Reference:</label>
-        <input
-          type="text"
-          id="sizeReferenceInput"
-          placeholder="   Enter the size reference"
-          value={sizeReference}
-          onChange={(e) => setSizeReference(e.target.value)}
-        />
-</div>
-      <div className="relative">
-        {previewUrl ? (
-          <button
-            className="absolute top-2 right-2 z-10"
-            onClick={handleClearPreview}
-          >
-            <X color="#9ca3af" size={20} />
-          </button>
-        ) : null}
-        {previewUrl && (
-          <div>
-            {previewUrl.startsWith("data:image/") && (
-              <img
-                src={previewUrl}
-                alt="Preview"
-                style={{ maxWidth: "100%" }}
-              />
-            )}
-            {previewUrl.startsWith("data:video/") && (
-              <video src={previewUrl} controls style={{ maxWidth: "100%" }} />
-            )}
+
+      {/* Upload Progress Bar */}
+      {uploadStatus === 'uploading' && (
+        <div className="mt-4">
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className="bg-gradient-to-r from-pink-600 to-[#ff6036] h-2 rounded-full transition-all duration-300"
+              style={{ width: `${uploadProgress}%` }}
+            ></div>
           </div>
-        )}
+          <p className="text-sm text-gray-600 mt-2 text-center">
+            Uploading... {uploadProgress}%
+          </p>
+        </div>
+      )}
+
+      {/* Processing State */}
+      {uploadStatus === 'processing' && (
+        <div className="mt-4 text-center">
+          <Oval
+            ariaLabel="processing-indicator"
+            height={24}
+            width={24}
+            strokeWidth={5}
+            strokeWidthSecondary={2}
+            color="#ff6036"
+            secondaryColor="transparent"
+          />
+          <p className="text-sm text-gray-600 mt-2">Processing your video...</p>
+        </div>
+      )}
+
+      {/* Success Message */}
+      {successMessage && (
+        <div className="flex items-center justify-center gap-2 text-green-600 mt-4">
+          <CheckCircle size={16} />
+          <span>{successMessage}</span>
+        </div>
+      )}
+
+      {/* Error Message */}
+      {errorMessage && (
+        <div className="text-red-600 mt-4 text-center">{errorMessage}</div>
+      )}
+
+      {/* Video Preview Section */}
+      <div className="relative">
+        {uploadStatus === 'complete' && processedVideoUrl ? (
+          <div className="mt-4">
+            <p>Processed Video:</p>
+            <video
+              src={processedVideoUrl}
+              controls
+              className="w-full max-h-[300px]"
+            />
+          </div>
+        ) : previewUrl ? (
+          <div className="mt-4">
+            <p>Video Preview:</p>
+            <video
+              src={previewUrl}
+              controls
+              className="w-full max-h-[300px]"
+            />
+          </div>
+        ) : null}
+      </div>
+
+      {/* Exercise Analysis Section */}
+      {uploadStatus === 'complete' && analysisData && (
+        <ExerciseAnalysis analysisData={analysisData} />
+      )}
+
+      {/* Form Fields */}
+      <div className="space-y-4 mt-4">
+        <div className="flex items-center">
+          <label htmlFor="emailInput" className="mr-2">Email:</label>
+          <input
+            type="email"
+            id="emailInput"
+            placeholder="Enter your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="border p-1 rounded"
+          />
+        </div>
+        <div className="flex items-center">
+          <label htmlFor="weightInput" className="mr-2">Weight:</label>
+          <input
+            type="text"
+            id="weightInput"
+            placeholder="Enter weight"
+            value={weight}
+            onChange={(e) => setWeight(e.target.value)}
+            className="border p-1 rounded"
+          />
+        </div>
+        <div className="flex items-center">
+          <label htmlFor="heightInput" className="mr-2">Height:</label>
+          <input
+            type="text"
+            id="heightInput"
+            placeholder="Enter height"
+            value={height}
+            onChange={(e) => setHeight(e.target.value)}
+            className="border p-1 rounded"
+          />
+        </div>
+        <div className="flex items-center">
+          <label htmlFor="loadInput" className="mr-2">Load:</label>
+          <input
+            type="text"
+            id="loadInput"
+            placeholder="Enter load"
+            value={load}
+            onChange={(e) => setLoad(e.target.value)}
+            className="border p-1 rounded"
+          />
+        </div>
       </div>
     </form>
   );
-}
+};
 
-interface MediaInputProps {
-  onSelected: (file: File | null) => void;
-  setPreviewUrl: Dispatch<SetStateAction<string | null>>;
-  handleButtonClick: () => void;
-}
+export { NewUpload };
 
-const MediaInput = forwardRef<HTMLInputElement, MediaInputProps>(
-  ({ onSelected, setPreviewUrl, handleButtonClick }, fileInputRef) => {
-    const handleFileInputChange = (event: ChangeEvent<HTMLInputElement>) => {
-      const selectedFile = event.target.files?.[0] ?? null;
-      onSelected(selectedFile);
-      if (selectedFile) {
-        const fileReader = new FileReader();
-        fileReader.onload = () => {
-          setPreviewUrl(fileReader.result as string);
-        };
-        fileReader.readAsDataURL(selectedFile);
-      } else {
-        setPreviewUrl(null);
-      }
-    };
-
-    return (
-      <div className="flex items-center">
-        <button type="button" onClick={handleButtonClick}>
-          <Arrow color="#9ca3af" size={20} />
-        </button>
-        <input
-          type="file"
-          accept="image/*, video/*"
-          onChange={handleFileInputChange}
-          ref={fileInputRef}
-          style={{ display: "none" }}
-        />
-      </div>
-    );
-  }
-);
-
-MediaInput.displayName = "MediaInput";
+export default NewUpload;

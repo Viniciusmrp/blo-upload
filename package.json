@@ -19,6 +19,7 @@
     "@uppy/progress-bar": "^3.0.2",
     "@uppy/tus": "^3.1.0",
     "autoprefixer": "10.4.14",
+    "axios": "^1.7.7",
     "eslint": "8.38.0",
     "eslint-config-next": "13.3.0",
     "firebase": "^9.22.1",
@@ -30,6 +31,7 @@
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-loader-spinner": "^5.3.4",
+    "recharts": "^2.15.1",
     "tailwindcss": "3.3.1",
     "typescript": "5.0.4"
   }
