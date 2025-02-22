@@ -4,6 +4,7 @@ import { Award, Target, Activity, AlertCircle } from 'lucide-react';
 
 interface AnalysisData {
   status: string;
+  error?: string;
   average_score?: number;
   total_reps?: number;
   rep_scores?: Array<{
@@ -21,9 +22,36 @@ interface ExerciseAnalysisProps {
 }
 
 const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => {
-  if (!analysisData || analysisData.status !== 'success') return null;
+  // Temporary debug render to see if component is receiving props
+  if (!analysisData) {
+    return (
+      <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
+        <p className="text-white">Waiting for analysis data...</p>
+      </div>
+    );
+  }
+  
+  if (analysisData.status !== 'success') {
+    return (
+      <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
+        <div className="text-red-400 flex items-center gap-2">
+          <AlertCircle className="h-5 w-5" />
+          <p>Error: {analysisData.error || 'Failed to load analysis'}</p>
+        </div>
+        <p className="text-gray-400 mt-2">Status: {analysisData.status || 'not set'}</p>
+      </div>
+    );
+  }
 
   const { average_score, total_reps, rep_scores, feedback } = analysisData;
+  
+  // Log destructured values
+  console.log('Destructured values:', { 
+    average_score, 
+    total_reps, 
+    rep_scores: rep_scores?.length, 
+    feedback: feedback?.length 
+  });
 
   const chartData = rep_scores?.map((score, index) => ({
     name: `Rep ${index + 1}`,
