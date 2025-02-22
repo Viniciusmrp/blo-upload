@@ -63,49 +63,53 @@ const NewUpload = () => {
   }, []);
 
   const startPollingForProcessing = async (videoName: string) => {
-    setUploadStatus('processing');
-    
-    const checkStatus = async () => {
-      try {
-        const response = await axios.get(
-          `https://my-flask-app-service-309448793861.us-central1.run.app/video-status/${videoName}`
-        );
-        
-        if (response.data.status === 'complete') {
-          setUploadStatus('complete');
-          setProcessedVideoUrl(response.data.processed_url);
+      setUploadStatus('processing');
+      
+      const checkStatus = async () => {
+        try {
+          const response = await axios.get(
+            `https://my-flask-app-service-309448793861.us-central1.run.app/video-status/${videoName}`
+          );
+          
+          if (response.data.status === 'complete') {
+            setUploadStatus('complete');
+            setProcessedVideoUrl(response.data.processed_url);
 
-          try {
+            // CHANGED: Moved videoId declaration outside of try block
             const videoId = videoName.split('.')[0];
-            console.log('Fetching analysis for videoId:', videoId);
-            const analysisResponse = await axios.get(
-              `https://my-flask-app-service-309448793861.us-central1.run.app/exercise-analysis/${videoId}`
-            );
-            console.log('Received analysis response:', analysisResponse.data);
-            setAnalysisData(analysisResponse.data);
-          } catch (error) {
-            console.error('Error fetching analysis:', error);
-            if (axios.isAxiosError(error)) {
-              console.error('Response data:', error.response?.data);
-              console.error('Response status:', error.response?.status);
+            console.log('Original video name:', videoName);
+            console.log('Extracted video ID for analysis fetch:', videoId);
+            
+            try {
+                const analysisResponse = await axios.get(
+                    `https://my-flask-app-service-309448793861.us-central1.run.app/exercise-analysis/${videoId}`
+                );
+                console.log('Analysis response for ID:', videoId, analysisResponse.data);
+                setAnalysisData(analysisResponse.data);
+            } catch (error) {
+                // Now videoId is accessible here
+                console.error('Error fetching analysis. Video ID:', videoId, error);
+                if (axios.isAxiosError(error)) {
+                    console.error('Response data:', error.response?.data);
+                    console.error('Response status:', error.response?.status);
+                }
             }
+
+            clearInterval(pollInterval.current);
+          } else if (response.data.status === 'error') {
+            setUploadStatus('error');
+            setErrorMessage('Video processing failed');
+            clearInterval(pollInterval.current);
           }
-
-          clearInterval(pollInterval.current);
-        } else if (response.data.status === 'error') {
-          setUploadStatus('error');
-          setErrorMessage('Video processing failed');
-          clearInterval(pollInterval.current);
+        } catch (error) {
+          console.error('Error checking video status:', error);
         }
-      } catch (error) {
-        console.error('Error checking video status:', error);
-      }
-    };
+      };
 
-    // Poll every 5 seconds
-    pollInterval.current = setInterval(checkStatus, 5000);
-    // Initial check
-    checkStatus();
+      // Poll every 5 seconds
+      pollInterval.current = setInterval(checkStatus, 5000);
+      // Initial check
+      checkStatus();
   };
 
   const handleSubmit = async (event: React.MouseEvent<HTMLButtonElement>) => {
