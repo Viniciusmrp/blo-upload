@@ -1,5 +1,6 @@
 import React from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Award, Target, Activity, AlertCircle } from 'lucide-react';
 
 interface AnalysisData {
   status: string;
@@ -24,63 +25,109 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
 
   const { average_score, total_reps, rep_scores, feedback } = analysisData;
 
-  // Prepare data for the chart
   const chartData = rep_scores?.map((score, index) => ({
     name: `Rep ${index + 1}`,
     ...score
   }));
 
   return (
-    <div className="mt-8 p-4 bg-white rounded-lg shadow">
-      <h2 className="text-xl font-semibold mb-4">Squat Analysis Results</h2>
-      
-      {/* Overall Scores */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="p-4 bg-blue-50 rounded-lg">
-          <h3 className="text-sm font-medium text-gray-500">Overall Score</h3>
-          <p className="text-2xl font-bold text-blue-600">
-            {average_score?.toFixed(1)}/100
-          </p>
+    <div className="space-y-6">
+      {/* Score Cards */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
+          <div className="flex items-center space-x-4">
+            <Award className="h-8 w-8 text-blue-400" />
+            <div>
+              <p className="text-sm text-gray-400">Overall Score</p>
+              <p className="text-2xl font-bold text-blue-400">
+                {average_score?.toFixed(1)}/100
+              </p>
+            </div>
+          </div>
         </div>
-        <div className="p-4 bg-green-50 rounded-lg">
-          <h3 className="text-sm font-medium text-gray-500">Total Reps</h3>
-          <p className="text-2xl font-bold text-green-600">{total_reps}</p>
+        <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
+          <div className="flex items-center space-x-4">
+            <Activity className="h-8 w-8 text-green-400" />
+            <div>
+              <p className="text-sm text-gray-400">Total Reps</p>
+              <p className="text-2xl font-bold text-green-400">{total_reps}</p>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Rep Scores Chart */}
+      {/* Performance Chart */}
       {chartData && chartData.length > 0 && (
-        <div className="mb-6">
-          <h3 className="text-lg font-medium mb-4">Rep Performance</h3>
-          <div className="w-full h-64">
-            <LineChart
-              width={500}
-              height={200}
-              data={chartData}
-              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis domain={[0, 100]} />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="depth_score" stroke="#8884d8" name="Depth" />
-              <Line type="monotone" dataKey="velocity_control_score" stroke="#82ca9d" name="Control" />
-              <Line type="monotone" dataKey="symmetry_score" stroke="#ffc658" name="Symmetry" />
-            </LineChart>
+        <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
+          <h3 className="text-lg font-semibold mb-6">Rep Performance</h3>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis 
+                  dataKey="name" 
+                  stroke="#9CA3AF"
+                  style={{ fontSize: '12px' }}
+                />
+                <YAxis 
+                  stroke="#9CA3AF"
+                  style={{ fontSize: '12px' }}
+                  domain={[0, 100]}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#1F2937',
+                    border: 'none',
+                    borderRadius: '8px',
+                    color: '#F3F4F6'
+                  }}
+                />
+                <Legend />
+                <Line 
+                  type="monotone" 
+                  dataKey="depth_score" 
+                  stroke="#60A5FA" 
+                  name="Depth"
+                  strokeWidth={2}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="velocity_control_score" 
+                  stroke="#34D399" 
+                  name="Control"
+                  strokeWidth={2}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="symmetry_score" 
+                  stroke="#FBBF24" 
+                  name="Symmetry"
+                  strokeWidth={2}
+                />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         </div>
       )}
 
       {/* Feedback Section */}
       {feedback && feedback.length > 0 && (
-        <div className="p-4 bg-yellow-50 rounded-lg">
-          <h3 className="text-lg font-medium mb-2">Form Feedback</h3>
-          <ul className="list-disc pl-5 space-y-2">
+        <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
+          <div className="flex items-center space-x-3 mb-4">
+            <AlertCircle className="h-6 w-6 text-blue-400" />
+            <h3 className="text-lg font-semibold">Form Feedback</h3>
+          </div>
+          <div className="space-y-3">
             {feedback.map((item, index) => (
-              <li key={index} className="text-gray-700">{item}</li>
+              <div 
+                key={index}
+                className="flex items-start space-x-3 p-3 bg-gray-700 rounded-lg"
+              >
+                <Target className="h-5 w-5 text-blue-400 mt-0.5" />
+                <p className="text-gray-200">{item}</p>
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
       )}
     </div>
