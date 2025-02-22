@@ -77,12 +77,18 @@ const NewUpload = () => {
 
           try {
             const videoId = videoName.split('.')[0];
+            console.log('Fetching analysis for videoId:', videoId);
             const analysisResponse = await axios.get(
               `https://my-flask-app-service-309448793861.us-central1.run.app/exercise-analysis/${videoId}`
             );
+            console.log('Received analysis response:', analysisResponse.data);
             setAnalysisData(analysisResponse.data);
           } catch (error) {
             console.error('Error fetching analysis:', error);
+            if (axios.isAxiosError(error)) {
+              console.error('Response data:', error.response?.data);
+              console.error('Response status:', error.response?.status);
+            }
           }
 
           clearInterval(pollInterval.current);
