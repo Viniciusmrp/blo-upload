@@ -1,6 +1,7 @@
 "use client";
 import ExerciseAnalysis from './ExerciseAnalysis';
 import { useRouter } from "next/navigation";
+import React from 'react';
 import {
   ChangeEvent,
   FormEvent,
@@ -11,7 +12,7 @@ import {
 } from "react";
 import axios from "axios";
 import { Oval } from "react-loader-spinner";
-import { ArrowUp as Arrow, CheckCircle } from "lucide-react";
+import { ArrowUp as Arrow, CheckCircle, Upload, Play, BarChart2 } from "lucide-react";
 import { generateVideoId } from "../utils/generateVideoId";
 
 interface AnalysisData {
@@ -62,46 +63,56 @@ const NewUpload = () => {
   }, []);
 
   const startPollingForProcessing = async (videoName: string) => {
-    setUploadStatus('processing');
-    
-    const checkStatus = async () => {
-      try {
-        const response = await axios.get(
-          `https://my-flask-app-service-309448793861.us-central1.run.app/video-status/${videoName}`
-        );
-        
-        if (response.data.status === 'complete') {
-          setUploadStatus('complete');
-          setProcessedVideoUrl(response.data.processed_url);
+      setUploadStatus('processing');
+      
+      const checkStatus = async () => {
+        try {
+          const response = await axios.get(
+            `https://my-flask-app-service-309448793861.us-central1.run.app/video-status/${videoName}`
+          );
+          
+          if (response.data.status === 'complete') {
+            setUploadStatus('complete');
+            setProcessedVideoUrl(response.data.processed_url);
 
-          try {
+            // CHANGED: Moved videoId declaration outside of try block
             const videoId = videoName.split('.')[0];
-            const analysisResponse = await axios.get(
-              `https://my-flask-app-service-309448793861.us-central1.run.app/exercise-analysis/${videoId}`
-            );
-            setAnalysisData(analysisResponse.data);
-          } catch (error) {
-            console.error('Error fetching analysis:', error);
+            console.log('Original video name:', videoName);
+            console.log('Extracted video ID for analysis fetch:', videoId);
+            
+            try {
+                const analysisResponse = await axios.get(
+                    `https://my-flask-app-service-309448793861.us-central1.run.app/exercise-analysis/${videoId}`
+                );
+                console.log('Analysis response for ID:', videoId, analysisResponse.data);
+                setAnalysisData(analysisResponse.data);
+            } catch (error) {
+                // Now videoId is accessible here
+                console.error('Error fetching analysis. Video ID:', videoId, error);
+                if (axios.isAxiosError(error)) {
+                    console.error('Response data:', error.response?.data);
+                    console.error('Response status:', error.response?.status);
+                }
+            }
+
+            clearInterval(pollInterval.current);
+          } else if (response.data.status === 'error') {
+            setUploadStatus('error');
+            setErrorMessage('Video processing failed');
+            clearInterval(pollInterval.current);
           }
-
-          clearInterval(pollInterval.current);
-        } else if (response.data.status === 'error') {
-          setUploadStatus('error');
-          setErrorMessage('Video processing failed');
-          clearInterval(pollInterval.current);
+        } catch (error) {
+          console.error('Error checking video status:', error);
         }
-      } catch (error) {
-        console.error('Error checking video status:', error);
-      }
-    };
+      };
 
-    // Poll every 5 seconds
-    pollInterval.current = setInterval(checkStatus, 5000);
-    // Initial check
-    checkStatus();
+      // Poll every 5 seconds
+      pollInterval.current = setInterval(checkStatus, 5000);
+      // Initial check
+      checkStatus();
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     setIsUploading(true);
     setUploadStatus('uploading');
@@ -208,166 +219,175 @@ const NewUpload = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="border-b border-gray-200">
-      <div className="flex items-center justify-between border-b px-4 py-2">
-        <div className="flex items-center gap-x-5">
-          <button type="button" onClick={handleButtonClick}>
-            <Arrow color="#9ca3af" size={20} />
-          </button>
-          <input
-            type="file"
-            accept="video/*"
-            onChange={handleMediaSelected}
-            ref={fileInputRef}
-            style={{ display: "none" }}
-          />
+    <div className="min-h-screen bg-gray-900 text-white">
+      {/* Header */}
+      <header className="border-b border-gray-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <h1 className="text-2xl font-bold text-blue-400">Exercise Analysis</h1>
         </div>
+      </header>
 
-        <div className="self-end">
-          <button
-            disabled={Boolean(selectedFile === null || isUploading)}
-            className="flex h-9 w-24 items-center justify-center rounded-full bg-gradient-to-r from-pink-600 via-red-500 to-[#ff6036] px-4 py-3 text-xs font-medium uppercase text-white disabled:opacity-50"
-          >
-            {isUploading ? (
-              <Oval
-                ariaLabel="loading-indicator"
-                height={16}
-                width={16}
-                strokeWidth={5}
-                strokeWidthSecondary={2}
-                color="white"
-                secondaryColor="transparent"
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Upload Section */}
+          <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
+            <div className="space-y-6">
+              <div className="text-center">
+                <h2 className="text-xl font-semibold mb-2">Upload Your Exercise Video</h2>
+                <p className="text-gray-400">Upload your video to analyze your form and technique</p>
+              </div>
+
+              <div 
+                className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-blue-400 transition-colors"
+                onClick={handleButtonClick}
+              >
+                {!selectedFile ? (
+                  <>
+                    <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                    <p className="mt-4 text-sm text-gray-400">
+                      Click to upload or drag and drop your video
+                    </p>
+                  </>
+                ) : (
+                  <div className="space-y-4">
+                    <CheckCircle className="mx-auto h-12 w-12 text-green-400" />
+                    <p className="text-sm text-gray-400">{selectedFile.name}</p>
+                  </div>
+                )}
+              </div>
+
+              <input
+                type="file"
+                accept="video/*"
+                onChange={handleMediaSelected}
+                ref={fileInputRef}
+                className="hidden"
               />
-            ) : (
-              "Publish"
+
+              {/* Form Fields */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm text-gray-400">Email</label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full bg-gray-700 rounded-lg border border-gray-600 p-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm text-gray-400">Weight (kg)</label>
+                  <input
+                    type="text"
+                    value={weight}
+                    onChange={(e) => setWeight(e.target.value)}
+                    className="w-full bg-gray-700 rounded-lg border border-gray-600 p-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm text-gray-400">Height (cm)</label>
+                  <input
+                    type="text"
+                    value={height}
+                    onChange={(e) => setHeight(e.target.value)}
+                    className="w-full bg-gray-700 rounded-lg border border-gray-600 p-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm text-gray-400">Load (kg)</label>
+                  <input
+                    type="text"
+                    value={load}
+                    onChange={(e) => setLoad(e.target.value)}
+                    className="w-full bg-gray-700 rounded-lg border border-gray-600 p-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={handleSubmit}
+                disabled={!selectedFile || isUploading}
+                className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg py-3 px-4 text-white font-medium transition-colors"
+              >
+                {isUploading ? (
+                  <Oval
+                    height={24}
+                    width={24}
+                    color="white"
+                    visible={true}
+                    ariaLabel="oval-loading"
+                    secondaryColor="gray"
+                    strokeWidth={4}
+                    strokeWidthSecondary={4}
+                  />
+                ) : (
+                  'Analyze Video'
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Preview & Analysis Section */}
+          <div className="space-y-6">
+            {/* Video Preview */}
+            {(previewUrl || processedVideoUrl) && (
+              <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
+                <h3 className="text-lg font-semibold mb-4">
+                  {uploadStatus === 'complete' ? 'Processed Video' : 'Video Preview'}
+                </h3>
+                <video
+                  src={processedVideoUrl || previewUrl || ''}
+                  controls
+                  className="w-full rounded-lg"
+                />
+              </div>
             )}
-          </button>
-        </div>
-      </div>
 
-      {/* Upload Progress Bar */}
-      {uploadStatus === 'uploading' && (
-        <div className="mt-4">
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div
-              className="bg-gradient-to-r from-pink-600 to-[#ff6036] h-2 rounded-full transition-all duration-300"
-              style={{ width: `${uploadProgress}%` }}
-            ></div>
+            {/* Upload Progress */}
+            {uploadStatus === 'uploading' && (
+              <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Uploading...</span>
+                    <span className="text-sm text-gray-400">{uploadProgress}%</span>
+                  </div>
+                  <div className="h-2 bg-gray-700 rounded-full">
+                    <div
+                      className="h-2 bg-blue-500 rounded-full transition-all duration-300"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Processing State */}
+            {uploadStatus === 'processing' && (
+              <div className="bg-gray-800 rounded-xl p-6 shadow-lg text-center">
+                <Oval
+                  height={40}
+                  width={40}
+                  color="#60A5FA"
+                  visible={true}
+                  ariaLabel="oval-loading"
+                  secondaryColor="#1F2937"
+                  strokeWidth={4}
+                  strokeWidthSecondary={4}
+                />
+                <p className="mt-4 text-gray-400">Analyzing your exercise form...</p>
+              </div>
+            )}
+
+            {/* Analysis Results */}
+            {uploadStatus === 'complete' && analysisData && (
+              <ExerciseAnalysis analysisData={analysisData} />
+            )}
           </div>
-          <p className="text-sm text-gray-600 mt-2 text-center">
-            Uploading... {uploadProgress}%
-          </p>
         </div>
-      )}
-
-      {/* Processing State */}
-      {uploadStatus === 'processing' && (
-        <div className="mt-4 text-center">
-          <Oval
-            ariaLabel="processing-indicator"
-            height={24}
-            width={24}
-            strokeWidth={5}
-            strokeWidthSecondary={2}
-            color="#ff6036"
-            secondaryColor="transparent"
-          />
-          <p className="text-sm text-gray-600 mt-2">Processing your video...</p>
-        </div>
-      )}
-
-      {/* Success Message */}
-      {successMessage && (
-        <div className="flex items-center justify-center gap-2 text-green-600 mt-4">
-          <CheckCircle size={16} />
-          <span>{successMessage}</span>
-        </div>
-      )}
-
-      {/* Error Message */}
-      {errorMessage && (
-        <div className="text-red-600 mt-4 text-center">{errorMessage}</div>
-      )}
-
-      {/* Video Preview Section */}
-      <div className="relative">
-        {uploadStatus === 'complete' && processedVideoUrl ? (
-          <div className="mt-4">
-            <p>Processed Video:</p>
-            <video
-              src={processedVideoUrl}
-              controls
-              className="w-full max-h-[300px]"
-            />
-          </div>
-        ) : previewUrl ? (
-          <div className="mt-4">
-            <p>Video Preview:</p>
-            <video
-              src={previewUrl}
-              controls
-              className="w-full max-h-[300px]"
-            />
-          </div>
-        ) : null}
-      </div>
-
-      {/* Exercise Analysis Section */}
-      {uploadStatus === 'complete' && analysisData && (
-        <ExerciseAnalysis analysisData={analysisData} />
-      )}
-
-      {/* Form Fields */}
-      <div className="space-y-4 mt-4">
-        <div className="flex items-center">
-          <label htmlFor="emailInput" className="mr-2">Email:</label>
-          <input
-            type="email"
-            id="emailInput"
-            placeholder="Enter your email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="border p-1 rounded"
-          />
-        </div>
-        <div className="flex items-center">
-          <label htmlFor="weightInput" className="mr-2">Weight:</label>
-          <input
-            type="text"
-            id="weightInput"
-            placeholder="Enter weight"
-            value={weight}
-            onChange={(e) => setWeight(e.target.value)}
-            className="border p-1 rounded"
-          />
-        </div>
-        <div className="flex items-center">
-          <label htmlFor="heightInput" className="mr-2">Height:</label>
-          <input
-            type="text"
-            id="heightInput"
-            placeholder="Enter height"
-            value={height}
-            onChange={(e) => setHeight(e.target.value)}
-            className="border p-1 rounded"
-          />
-        </div>
-        <div className="flex items-center">
-          <label htmlFor="loadInput" className="mr-2">Load:</label>
-          <input
-            type="text"
-            id="loadInput"
-            placeholder="Enter load"
-            value={load}
-            onChange={(e) => setLoad(e.target.value)}
-            className="border p-1 rounded"
-          />
-        </div>
-      </div>
-    </form>
+      </main>
+    </div>
   );
 };
-
-export { NewUpload };
 
 export default NewUpload;
