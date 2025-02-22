@@ -4,7 +4,6 @@ import { Award, Target, Activity, AlertCircle } from 'lucide-react';
 
 interface AnalysisData {
   status: string;
-  error?: string;
   average_score?: number;
   total_reps?: number;
   rep_scores?: Array<{
@@ -25,18 +24,18 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
   // Temporary debug render to see if component is receiving props
   if (!analysisData) {
     return (
-      <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
-        <p className="text-white">Waiting for analysis data...</p>
+      <div className="text-gray-400">
+        <p>Waiting for analysis data...</p>
       </div>
     );
   }
   
   if (analysisData.status !== 'success') {
     return (
-      <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
+      <div>
         <div className="text-red-400 flex items-center gap-2">
           <AlertCircle className="h-5 w-5" />
-          <p>Error: {analysisData.error || 'Failed to load analysis'}</p>
+          <p>Error analyzing exercise</p>
         </div>
         <p className="text-gray-400 mt-2">Status: {analysisData.status || 'not set'}</p>
       </div>
@@ -87,7 +86,7 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
       {/* Performance Chart */}
       {chartData && chartData.length > 0 && (
         <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
-          <h3 className="text-lg font-semibold mb-6">Rep Performance</h3>
+          <h3 className="text-lg font-semibold text-white mb-6">Rep Performance</h3>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
@@ -143,7 +142,7 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
         <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
           <div className="flex items-center space-x-3 mb-4">
             <AlertCircle className="h-6 w-6 text-blue-400" />
-            <h3 className="text-lg font-semibold">Form Feedback</h3>
+            <h3 className="text-lg font-semibold text-white">Form Feedback</h3>
           </div>
           <div className="space-y-3">
             {feedback.map((item, index) => (

@@ -219,173 +219,159 @@ const NewUpload = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      {/* Header */}
-      <header className="border-b border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <h1 className="text-2xl font-bold text-blue-400">Exercise Analysis</h1>
-        </div>
-      </header>
+    <div className="w-full">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Upload Section */}
+        <div className="space-y-6">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-white mb-2">Upload Your Exercise Video</h2>
+            <p className="text-gray-400">Upload your video to analyze your form and technique</p>
+          </div>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Upload Section */}
-          <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
-            <div className="space-y-6">
-              <div className="text-center">
-                <h2 className="text-xl font-semibold mb-2">Upload Your Exercise Video</h2>
-                <p className="text-gray-400">Upload your video to analyze your form and technique</p>
+          <div 
+            className="border-2 border-dashed border-gray-700 rounded-lg p-8 text-center cursor-pointer hover:border-blue-400 transition-colors"
+            onClick={handleButtonClick}
+          >
+            {!selectedFile ? (
+              <>
+                <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                <p className="mt-4 text-sm text-gray-400">
+                  Click to upload or drag and drop your video
+                </p>
+              </>
+            ) : (
+              <div className="space-y-4">
+                <CheckCircle className="mx-auto h-12 w-12 text-green-400" />
+                <p className="text-sm text-gray-400">{selectedFile.name}</p>
               </div>
+            )}
+          </div>
 
-              <div 
-                className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-blue-400 transition-colors"
-                onClick={handleButtonClick}
-              >
-                {!selectedFile ? (
-                  <>
-                    <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                    <p className="mt-4 text-sm text-gray-400">
-                      Click to upload or drag and drop your video
-                    </p>
-                  </>
-                ) : (
-                  <div className="space-y-4">
-                    <CheckCircle className="mx-auto h-12 w-12 text-green-400" />
-                    <p className="text-sm text-gray-400">{selectedFile.name}</p>
-                  </div>
-                )}
-              </div>
+          <input
+            type="file"
+            accept="video/*"
+            onChange={handleMediaSelected}
+            ref={fileInputRef}
+            className="hidden"
+          />
 
+          {/* Form Fields */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm text-gray-400">Email</label>
               <input
-                type="file"
-                accept="video/*"
-                onChange={handleMediaSelected}
-                ref={fileInputRef}
-                className="hidden"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-gray-800 rounded-lg border border-gray-700 p-2 text-white focus:ring-2 focus:ring-blue-400 focus:border-transparent"
               />
-
-              {/* Form Fields */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm text-gray-400">Email</label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-gray-700 rounded-lg border border-gray-600 p-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm text-gray-400">Weight (kg)</label>
-                  <input
-                    type="text"
-                    value={weight}
-                    onChange={(e) => setWeight(e.target.value)}
-                    className="w-full bg-gray-700 rounded-lg border border-gray-600 p-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm text-gray-400">Height (cm)</label>
-                  <input
-                    type="text"
-                    value={height}
-                    onChange={(e) => setHeight(e.target.value)}
-                    className="w-full bg-gray-700 rounded-lg border border-gray-600 p-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm text-gray-400">Load (kg)</label>
-                  <input
-                    type="text"
-                    value={load}
-                    onChange={(e) => setLoad(e.target.value)}
-                    className="w-full bg-gray-700 rounded-lg border border-gray-600 p-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                  />
-                </div>
-              </div>
-
-              <button
-                onClick={handleSubmit}
-                disabled={!selectedFile || isUploading}
-                className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg py-3 px-4 text-white font-medium transition-colors"
-              >
-                {isUploading ? (
-                  <Oval
-                    height={24}
-                    width={24}
-                    color="white"
-                    visible={true}
-                    ariaLabel="oval-loading"
-                    secondaryColor="gray"
-                    strokeWidth={4}
-                    strokeWidthSecondary={4}
-                  />
-                ) : (
-                  'Analyze Video'
-                )}
-              </button>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm text-gray-400">Weight (kg)</label>
+              <input
+                type="text"
+                value={weight}
+                onChange={(e) => setWeight(e.target.value)}
+                className="w-full bg-gray-800 rounded-lg border border-gray-700 p-2 text-white focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm text-gray-400">Height (cm)</label>
+              <input
+                type="text"
+                value={height}
+                onChange={(e) => setHeight(e.target.value)}
+                className="w-full bg-gray-800 rounded-lg border border-gray-700 p-2 text-white focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm text-gray-400">Load (kg)</label>
+              <input
+                type="text"
+                value={load}
+                onChange={(e) => setLoad(e.target.value)}
+                className="w-full bg-gray-800 rounded-lg border border-gray-700 p-2 text-white focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+              />
             </div>
           </div>
 
-          {/* Preview & Analysis Section */}
-          <div className="space-y-6">
-            {/* Video Preview */}
-            {(previewUrl || processedVideoUrl) && (
-              <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
-                <h3 className="text-lg font-semibold mb-4">
-                  {uploadStatus === 'complete' ? 'Processed Video' : 'Video Preview'}
-                </h3>
-                <video
-                  src={processedVideoUrl || previewUrl || ''}
-                  controls
-                  className="w-full rounded-lg"
-                />
-              </div>
+          <button
+            onClick={handleSubmit}
+            disabled={!selectedFile || isUploading}
+            className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-700 disabled:cursor-not-allowed rounded-lg py-3 px-4 text-white font-medium transition-colors"
+          >
+            {isUploading ? (
+              <Oval
+                height={24}
+                width={24}
+                color="white"
+                visible={true}
+                ariaLabel="oval-loading"
+                secondaryColor="gray"
+                strokeWidth={4}
+                strokeWidthSecondary={4}
+              />
+            ) : (
+              'Analyze Video'
             )}
-
-            {/* Upload Progress */}
-            {uploadStatus === 'uploading' && (
-              <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Uploading...</span>
-                    <span className="text-sm text-gray-400">{uploadProgress}%</span>
-                  </div>
-                  <div className="h-2 bg-gray-700 rounded-full">
-                    <div
-                      className="h-2 bg-blue-500 rounded-full transition-all duration-300"
-                      style={{ width: `${uploadProgress}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Processing State */}
-            {uploadStatus === 'processing' && (
-              <div className="bg-gray-800 rounded-xl p-6 shadow-lg text-center">
-                <Oval
-                  height={40}
-                  width={40}
-                  color="#60A5FA"
-                  visible={true}
-                  ariaLabel="oval-loading"
-                  secondaryColor="#1F2937"
-                  strokeWidth={4}
-                  strokeWidthSecondary={4}
-                />
-                <p className="mt-4 text-gray-400">Analyzing your exercise form...</p>
-              </div>
-            )}
-
-            {/* Analysis Results */}
-            {uploadStatus === 'complete' && analysisData && (
-              <ExerciseAnalysis analysisData={analysisData} />
-            )}
-          </div>
+          </button>
         </div>
-      </main>
+
+        {/* Preview & Analysis Section */}
+        <div className="space-y-6">
+          {/* Video Preview */}
+          {(previewUrl || processedVideoUrl) && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-white">
+                {uploadStatus === 'complete' ? 'Processed Video' : 'Video Preview'}
+              </h3>
+              <video
+                src={processedVideoUrl || previewUrl || ''}
+                controls
+                className="w-full rounded-lg"
+              />
+            </div>
+          )}
+
+          {/* Upload Progress */}
+          {uploadStatus === 'uploading' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-white">Uploading...</span>
+                <span className="text-sm text-gray-400">{uploadProgress}%</span>
+              </div>
+              <div className="h-2 bg-gray-800 rounded-full">
+                <div
+                  className="h-2 bg-blue-500 rounded-full transition-all duration-300"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Processing State */}
+          {uploadStatus === 'processing' && (
+            <div className="text-center">
+              <Oval
+                height={40}
+                width={40}
+                color="#60A5FA"
+                visible={true}
+                ariaLabel="oval-loading"
+                secondaryColor="#1F2937"
+                strokeWidth={4}
+                strokeWidthSecondary={4}
+              />
+              <p className="mt-4 text-gray-400">Analyzing your exercise form...</p>
+            </div>
+          )}
+
+          {/* Analysis Results */}
+          {uploadStatus === 'complete' && analysisData && (
+            <ExerciseAnalysis analysisData={analysisData} />
+          )}
+        </div>
+      </div>
     </div>
   );
 };
