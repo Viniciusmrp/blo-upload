@@ -17,9 +17,9 @@ import { generateVideoId } from "../utils/generateVideoId";
 
 interface AnalysisData {
   status: string;
-  average_score?: number;
-  total_reps?: number;
-  rep_scores?: Array<any>;
+  message?: string;
+  metrics?: any;
+  time_series?: any[];
   feedback?: string[];
 }
 
@@ -75,7 +75,6 @@ const NewUpload = () => {
             setUploadStatus('complete');
             setProcessedVideoUrl(response.data.processed_url);
 
-            // CHANGED: Moved videoId declaration outside of try block
             const videoId = videoName.split('.')[0];
             console.log('Original video name:', videoName);
             console.log('Extracted video ID for analysis fetch:', videoId);
@@ -87,7 +86,6 @@ const NewUpload = () => {
                 console.log('Analysis response for ID:', videoId, analysisResponse.data);
                 setAnalysisData(analysisResponse.data);
             } catch (error) {
-                // Now videoId is accessible here
                 console.error('Error fetching analysis. Video ID:', videoId, error);
                 if (axios.isAxiosError(error)) {
                     console.error('Response data:', error.response?.data);
@@ -183,7 +181,7 @@ const NewUpload = () => {
     handleClearPreview();
   };
 
-  const [isPortrait, setIsPortrait] = useState(false);  // Add this state at the top
+  const [isPortrait, setIsPortrait] = useState(false);
 
   const handleMediaSelected = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null;
@@ -219,159 +217,168 @@ const NewUpload = () => {
   };
 
   return (
-    <div className="w-full">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Upload Section */}
-        <div className="space-y-6">
-          <div className="text-center">
-            <h2 className="text-xl font-semibold text-white mb-2">Upload Your Exercise Video</h2>
-            <p className="text-gray-400">Upload your video to analyze your form and technique</p>
-          </div>
-
-          <div 
-            className="border-2 border-dashed border-gray-700 rounded-lg p-8 text-center cursor-pointer hover:border-blue-400 transition-colors"
-            onClick={handleButtonClick}
-          >
-            {!selectedFile ? (
-              <>
-                <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                <p className="mt-4 text-sm text-gray-400">
-                  Click to upload or drag and drop your video
-                </p>
-              </>
-            ) : (
-              <div className="space-y-4">
-                <CheckCircle className="mx-auto h-12 w-12 text-green-400" />
-                <p className="text-sm text-gray-400">{selectedFile.name}</p>
-              </div>
-            )}
-          </div>
-
-          <input
-            type="file"
-            accept="video/*"
-            onChange={handleMediaSelected}
-            ref={fileInputRef}
-            className="hidden"
-          />
-
-          {/* Form Fields */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-gray-800 rounded-lg border border-gray-700 p-2 text-white focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">Weight (kg)</label>
-              <input
-                type="text"
-                value={weight}
-                onChange={(e) => setWeight(e.target.value)}
-                className="w-full bg-gray-800 rounded-lg border border-gray-700 p-2 text-white focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">Height (cm)</label>
-              <input
-                type="text"
-                value={height}
-                onChange={(e) => setHeight(e.target.value)}
-                className="w-full bg-gray-800 rounded-lg border border-gray-700 p-2 text-white focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">Load (kg)</label>
-              <input
-                type="text"
-                value={load}
-                onChange={(e) => setLoad(e.target.value)}
-                className="w-full bg-gray-800 rounded-lg border border-gray-700 p-2 text-white focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-              />
-            </div>
-          </div>
-
-          <button
-            onClick={handleSubmit}
-            disabled={!selectedFile || isUploading}
-            className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-700 disabled:cursor-not-allowed rounded-lg py-3 px-4 text-white font-medium transition-colors"
-          >
-            {isUploading ? (
-              <Oval
-                height={24}
-                width={24}
-                color="white"
-                visible={true}
-                ariaLabel="oval-loading"
-                secondaryColor="gray"
-                strokeWidth={4}
-                strokeWidthSecondary={4}
-              />
-            ) : (
-              'Analyze Video'
-            )}
-          </button>
+    <div className="w-full max-w-4xl mx-auto px-4">
+      {/* Upload Section - Centered */}
+      <div className="mb-8">
+        <div className="text-center mb-6">
+          <h2 className="text-xl font-semibold text-white mb-2">Upload Your Exercise Video</h2>
+          <p className="text-gray-400">Upload your video to analyze your form and technique</p>
         </div>
 
-        {/* Preview & Analysis Section */}
-        <div className="space-y-6">
-          {/* Video Preview */}
-          {(previewUrl || processedVideoUrl) && (
+        <div 
+          className="border-2 border-dashed border-gray-700 rounded-lg p-8 text-center cursor-pointer hover:border-blue-400 transition-colors mb-6"
+          onClick={handleButtonClick}
+        >
+          {!selectedFile ? (
+            <>
+              <Upload className="mx-auto h-12 w-12 text-gray-400" />
+              <p className="mt-4 text-sm text-gray-400">
+                Click to upload or drag and drop your video
+              </p>
+            </>
+          ) : (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-white">
-                {uploadStatus === 'complete' ? 'Processed Video' : 'Video Preview'}
-              </h3>
-              <video
-                src={processedVideoUrl || previewUrl || ''}
-                controls
-                className="w-full rounded-lg"
-              />
+              <CheckCircle className="mx-auto h-12 w-12 text-green-400" />
+              <p className="text-sm text-gray-400">{selectedFile.name}</p>
             </div>
-          )}
-
-          {/* Upload Progress */}
-          {uploadStatus === 'uploading' && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-white">Uploading...</span>
-                <span className="text-sm text-gray-400">{uploadProgress}%</span>
-              </div>
-              <div className="h-2 bg-gray-800 rounded-full">
-                <div
-                  className="h-2 bg-blue-500 rounded-full transition-all duration-300"
-                  style={{ width: `${uploadProgress}%` }}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Processing State */}
-          {uploadStatus === 'processing' && (
-            <div className="text-center">
-              <Oval
-                height={40}
-                width={40}
-                color="#60A5FA"
-                visible={true}
-                ariaLabel="oval-loading"
-                secondaryColor="#1F2937"
-                strokeWidth={4}
-                strokeWidthSecondary={4}
-              />
-              <p className="mt-4 text-gray-400">Analyzing your exercise form...</p>
-            </div>
-          )}
-
-          {/* Analysis Results */}
-          {uploadStatus === 'complete' && analysisData && (
-            <ExerciseAnalysis analysisData={analysisData} />
           )}
         </div>
+
+        <input
+          type="file"
+          accept="video/*"
+          onChange={handleMediaSelected}
+          ref={fileInputRef}
+          className="hidden"
+        />
+
+        {/* Form Fields - Grid for smaller fields */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="space-y-2">
+            <label className="text-sm text-gray-400">Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full bg-gray-800 rounded-lg border border-gray-700 p-2 text-white focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm text-gray-400">Weight (kg)</label>
+            <input
+              type="text"
+              value={weight}
+              onChange={(e) => setWeight(e.target.value)}
+              className="w-full bg-gray-800 rounded-lg border border-gray-700 p-2 text-white focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm text-gray-400">Height (cm)</label>
+            <input
+              type="text"
+              value={height}
+              onChange={(e) => setHeight(e.target.value)}
+              className="w-full bg-gray-800 rounded-lg border border-gray-700 p-2 text-white focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm text-gray-400">Load (kg)</label>
+            <input
+              type="text"
+              value={load}
+              onChange={(e) => setLoad(e.target.value)}
+              className="w-full bg-gray-800 rounded-lg border border-gray-700 p-2 text-white focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+            />
+          </div>
+        </div>
+
+        <button
+          onClick={handleSubmit}
+          disabled={!selectedFile || isUploading}
+          className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-700 disabled:cursor-not-allowed rounded-lg py-3 px-4 text-white font-medium transition-colors"
+        >
+          {isUploading ? (
+            <Oval
+              height={24}
+              width={24}
+              color="white"
+              visible={true}
+              ariaLabel="oval-loading"
+              secondaryColor="gray"
+              strokeWidth={4}
+              strokeWidthSecondary={4}
+            />
+          ) : (
+            'Analyze Video'
+          )}
+        </button>
       </div>
+
+      {/* Upload Progress & Processing Section */}
+      {uploadStatus === 'uploading' && (
+        <div className="mb-8">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-white">Uploading...</span>
+              <span className="text-sm text-gray-400">{uploadProgress}%</span>
+            </div>
+            <div className="h-2 bg-gray-800 rounded-full">
+              <div
+                className="h-2 bg-blue-500 rounded-full transition-all duration-300"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Processing State */}
+      {uploadStatus === 'processing' && (
+        <div className="text-center mb-8">
+          <Oval
+            height={40}
+            width={40}
+            color="#60A5FA"
+            visible={true}
+            ariaLabel="oval-loading"
+            secondaryColor="#1F2937"
+            strokeWidth={4}
+            strokeWidthSecondary={4}
+          />
+          <p className="mt-4 text-gray-400">Analyzing your exercise form...</p>
+        </div>
+      )}
+
+      {/* Video Preview Section - Below Upload */}
+      {(previewUrl || processedVideoUrl) && (
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold text-white mb-4">
+            {uploadStatus === 'complete' ? 'Processed Video' : 'Video Preview'}
+          </h3>
+          <div className="w-full flex justify-center">
+            <video
+              src={processedVideoUrl || previewUrl || ''}
+              controls
+              className="w-full max-w-2xl rounded-lg"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Analysis Results Section - Below Video */}
+      {uploadStatus === 'complete' && analysisData && (
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold text-white mb-4">Exercise Analysis</h3>
+          <ExerciseAnalysis analysisData={analysisData} />
+        </div>
+      )}
+
+      {/* Error Messages */}
+      {errorMessage && (
+        <div className="p-4 bg-red-900/30 border border-red-700 rounded-lg mb-8">
+          <p className="text-red-400">{errorMessage}</p>
+        </div>
+      )}
     </div>
   );
 };
