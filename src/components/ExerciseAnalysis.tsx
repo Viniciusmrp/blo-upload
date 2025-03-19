@@ -1,22 +1,22 @@
 import React from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { Award, Target, Activity, AlertCircle, Clock, TrendingUp, Move } from 'lucide-react';
 
-interface TrainingMetrics {
+interface Metrics {
   volume: {
-    total: number;
-    max_rom: number;
-    avg_rom: number;
+    total_kg: number;
+    score: number;
   };
   tension: {
     total_time: number;
     periods: number;
+    score: number;
   };
   intensity: {
-    max_velocity: number;
-    avg_velocity: number;
-    max_acceleration: number;
-    avg_acceleration: number;
+    concentric_acceleration: number;
+    eccentric_acceleration: number;
+    control_ratio: number;
+    score: number;
   };
   symmetry: number;
 }
@@ -24,16 +24,22 @@ interface TrainingMetrics {
 interface TimeSeriesPoint {
   time: number;
   knee_angle: number;
-  velocity: number;
+  hip_position: number;
   acceleration: number;
-  rom: number;
+}
+
+interface TensionPoint {
+  time: number;
+  tension: number;
 }
 
 interface AnalysisData {
   status: string;
   message?: string;
-  metrics?: TrainingMetrics;
+  overall_score?: number;
+  metrics?: Metrics;
   time_series?: TimeSeriesPoint[];
+  tension_series?: TensionPoint[];
   feedback?: string[];
 }
 
@@ -63,7 +69,7 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
     );
   }
 
-  const { metrics, time_series, feedback } = analysisData;
+  const { metrics, time_series, tension_series, feedback, overall_score } = analysisData;
   
   if (!metrics || !time_series) {
     return (
@@ -72,107 +78,78 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
       </div>
     );
   }
-  
-  // Prepare radar chart data
-  const radarData = [
-    {
-      subject: 'Volume',
-      value: Math.min(100, (metrics.volume.avg_rom / 40) * 100), // Normalize to 0-100
-      fullMark: 100,
-    },
-    {
-      subject: 'Time Under Tension',
-      value: Math.min(100, (metrics.tension.total_time / 30) * 100), // Normalize to 0-100
-      fullMark: 100,
-    },
-    {
-      subject: 'Intensity',
-      value: Math.min(100, (metrics.intensity.avg_acceleration / 15) * 100), // Normalize to 0-100
-      fullMark: 100,
-    },
-    {
-      subject: 'Symmetry',
-      value: metrics.symmetry,
-      fullMark: 100,
-    },
-  ];
 
   return (
     <div className="space-y-6">
-      {/* Main Training Variables */}
-      <div className="grid grid-cols-2 gap-4">
+      {/* Overall Score Card */}
+      <div className="bg-gray-800 rounded-xl p-6 shadow-lg mb-6">
+        <div className="flex items-center justify-center space-x-4">
+          <Award className="h-12 w-12 text-yellow-400" />
+          <div className="text-center">
+            <p className="text-md text-gray-400">Overall Training Score</p>
+            <p className="text-4xl font-bold text-yellow-400">
+              {overall_score?.toFixed(1)}/100
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Training Variables - Side by Side */}
+      <div className="grid grid-cols-3 gap-4">
         <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
-          <div className="flex items-center space-x-4">
-            <Move className="h-8 w-8 text-blue-400" />
-            <div>
-              <p className="text-sm text-gray-400">Volume (ROM)</p>
-              <p className="text-2xl font-bold text-blue-400">
-                {metrics.volume.avg_rom.toFixed(1)}°
-              </p>
+          <div className="flex flex-col items-center text-center">
+            <Move className="h-8 w-8 text-blue-400 mb-2" />
+            <p className="text-sm text-gray-400">Volume</p>
+            <p className="text-xl font-bold text-blue-400">
+              {metrics.volume.total_kg.toFixed(0)} kg
+            </p>
+            <div className="mt-2 h-1 w-full bg-gray-700 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-blue-400 rounded-full" 
+                style={{ width: `${metrics.volume.score}%` }}
+              />
             </div>
           </div>
         </div>
+        
         <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
-          <div className="flex items-center space-x-4">
-            <Clock className="h-8 w-8 text-green-400" />
-            <div>
-              <p className="text-sm text-gray-400">Time Under Tension</p>
-              <p className="text-2xl font-bold text-green-400">
-                {metrics.tension.total_time.toFixed(1)}s
-              </p>
+          <div className="flex flex-col items-center text-center">
+            <Clock className="h-8 w-8 text-green-400 mb-2" />
+            <p className="text-sm text-gray-400">Time Under Tension</p>
+            <p className="text-xl font-bold text-green-400">
+              {metrics.tension.total_time.toFixed(1)}s
+            </p>
+            <div className="mt-2 h-1 w-full bg-gray-700 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-green-400 rounded-full" 
+                style={{ width: `${metrics.tension.score}%` }}
+              />
             </div>
           </div>
         </div>
+        
         <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
-          <div className="flex items-center space-x-4">
-            <TrendingUp className="h-8 w-8 text-yellow-400" />
-            <div>
-              <p className="text-sm text-gray-400">Intensity (Accel)</p>
-              <p className="text-2xl font-bold text-yellow-400">
-                {metrics.intensity.avg_acceleration.toFixed(1)}
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
-          <div className="flex items-center space-x-4">
-            <Activity className="h-8 w-8 text-purple-400" />
-            <div>
-              <p className="text-sm text-gray-400">Symmetry</p>
-              <p className="text-2xl font-bold text-purple-400">
-                {metrics.symmetry.toFixed(1)}%
-              </p>
+          <div className="flex flex-col items-center text-center">
+            <TrendingUp className="h-8 w-8 text-yellow-400 mb-2" />
+            <p className="text-sm text-gray-400">Intensity</p>
+            <p className="text-xl font-bold text-yellow-400">
+              {metrics.intensity.concentric_acceleration.toFixed(1)}
+            </p>
+            <div className="mt-2 h-1 w-full bg-gray-700 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-yellow-400 rounded-full" 
+                style={{ width: `${metrics.intensity.score}%` }}
+              />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Training Variables Radar Chart */}
-      <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
-        <h3 className="text-lg font-semibold text-white mb-4">Training Variables Balance</h3>
-        <div className="h-[300px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
-              <PolarGrid stroke="#374151" />
-              <PolarAngleAxis dataKey="subject" tick={{ fill: '#9CA3AF' }} />
-              <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: '#9CA3AF' }} />
-              <Radar name="Training Variables" dataKey="value" stroke="#60A5FA" fill="#60A5FA" fillOpacity={0.6} />
-              <Tooltip contentStyle={{
-                backgroundColor: '#1F2937',
-                border: 'none',
-                borderRadius: '8px',
-                color: '#F3F4F6'
-              }} />
-            </RadarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Time Series Charts */}
+      {/* Time Series Charts - Volume & Intensity */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Range of Motion Chart */}
+        {/* Volume Chart */}
         <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
-          <h3 className="text-lg font-semibold text-white mb-4">Range of Motion</h3>
+          <h3 className="text-lg font-semibold text-white mb-4">Volume (Hip Position)</h3>
           <div className="h-[250px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={time_series}>
@@ -184,7 +161,6 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
                 />
                 <YAxis 
                   stroke="#9CA3AF"
-                  label={{ value: 'ROM (°)', angle: -90, position: 'insideLeft', fill: '#9CA3AF' }}
                 />
                 <Tooltip
                   contentStyle={{
@@ -196,7 +172,7 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
                 />
                 <Line 
                   type="monotone" 
-                  dataKey="rom" 
+                  dataKey="hip_position" 
                   stroke="#60A5FA" 
                   strokeWidth={2}
                   dot={false}
@@ -206,7 +182,7 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
           </div>
         </div>
 
-        {/* Intensity (Acceleration) Chart */}
+        {/* Intensity Chart */}
         <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
           <h3 className="text-lg font-semibold text-white mb-4">Intensity (Acceleration)</h3>
           <div className="h-[250px]">
@@ -220,7 +196,6 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
                 />
                 <YAxis 
                   stroke="#9CA3AF"
-                  label={{ value: 'Acceleration', angle: -90, position: 'insideLeft', fill: '#9CA3AF' }}
                 />
                 <Tooltip
                   contentStyle={{
@@ -240,6 +215,45 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
               </LineChart>
             </ResponsiveContainer>
           </div>
+        </div>
+      </div>
+
+      {/* Time Under Tension Chart */}
+      <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
+        <h3 className="text-lg font-semibold text-white mb-4">Time Under Tension</h3>
+        <div className="h-[200px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={tension_series}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+              <XAxis 
+                dataKey="time" 
+                stroke="#9CA3AF"
+                label={{ value: 'Time (s)', position: 'insideBottom', fill: '#9CA3AF' }}
+              />
+              <YAxis 
+                stroke="#9CA3AF"
+                domain={[0, 1]}
+                ticks={[0, 1]}
+                tickFormatter={(value) => value === 0 ? 'Rest' : 'Tension'}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#1F2937',
+                  border: 'none',
+                  borderRadius: '8px',
+                  color: '#F3F4F6'
+                }}
+                formatter={(value) => [value === 1 ? 'Under Tension' : 'Rest', 'State']}
+              />
+              <Area 
+                type="stepAfter" 
+                dataKey="tension" 
+                stroke="#10B981" 
+                fill="#10B981" 
+                fillOpacity={0.6}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
