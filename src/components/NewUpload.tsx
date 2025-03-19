@@ -63,52 +63,87 @@ const NewUpload = () => {
   }, []);
 
   const startPollingForProcessing = async (videoName: string) => {
-      setUploadStatus('processing');
-      
-      const checkStatus = async () => {
-        try {
-          const response = await axios.get(
-            `https://my-flask-app-service-309448793861.us-central1.run.app/video-status/${videoName}`
-          );
+    setUploadStatus('processing');
+    
+    const checkStatus = async () => {
+      try {
+        const response = await axios.get(
+          `https://my-flask-app-service-309448793861.us-central1.run.app/video-status/${videoName}`
+        );
+        
+        if (response.data.status === 'complete') {
+          setUploadStatus('complete');
+          setProcessedVideoUrl(response.data.processed_url);
+
+          const videoId = videoName.split('.')[0];
+          console.log('Original video name:', videoName);
+          console.log('Extracted video ID for analysis fetch:', videoId);
           
-          if (response.data.status === 'complete') {
-            setUploadStatus('complete');
-            setProcessedVideoUrl(response.data.processed_url);
-
-            const videoId = videoName.split('.')[0];
-            console.log('Original video name:', videoName);
-            console.log('Extracted video ID for analysis fetch:', videoId);
-            
-            try {
-                const analysisResponse = await axios.get(
-                    `https://my-flask-app-service-309448793861.us-central1.run.app/exercise-analysis/${videoId}`
-                );
-                console.log('Analysis response for ID:', videoId, analysisResponse.data);
-                setAnalysisData(analysisResponse.data);
-            } catch (error) {
-                console.error('Error fetching analysis. Video ID:', videoId, error);
-                if (axios.isAxiosError(error)) {
-                    console.error('Response data:', error.response?.data);
-                    console.error('Response status:', error.response?.status);
-                }
-            }
-
-            clearInterval(pollInterval.current);
-          } else if (response.data.status === 'error') {
-            setUploadStatus('error');
-            setErrorMessage('Video processing failed');
-            clearInterval(pollInterval.current);
+          try {
+              const analysisResponse = await axios.get(
+                  `https://my-flask-app-service-309448793861.us-central1.run.app/exercise-analysis/${videoId}`
+              );
+              console.log('Raw analysis response:', analysisResponse);
+              
+              // Validate and process the response data before setting state
+              if (analysisResponse.data && analysisResponse.data.status === 'success') {
+                  // Make sure all expected properties exist to prevent rendering errors
+                  const processedData = {
+                      ...analysisResponse.data,
+                      metrics: {
+                          ...analysisResponse.data.metrics,
+                          // Ensure volume data exists
+                          volume: {
+                              total_kg: parseFloat(analysisResponse.data.metrics?.volume?.total_kg || 0),
+                              score: parseFloat(analysisResponse.data.metrics?.volume?.score || 0)
+                          },
+                          // Ensure intensity data exists
+                          intensity: {
+                              concentric_acceleration: parseFloat(analysisResponse.data.metrics?.intensity?.concentric_acceleration || 0),
+                              eccentric_acceleration: parseFloat(analysisResponse.data.metrics?.intensity?.eccentric_acceleration || 0),
+                              control_ratio: parseFloat(analysisResponse.data.metrics?.intensity?.control_ratio || 0),
+                              score: parseFloat(analysisResponse.data.metrics?.intensity?.score || 0)
+                          }
+                      }
+                  };
+                  
+                  console.log('Processed analysis data:', processedData);
+                  setAnalysisData(processedData);
+              } else {
+                  console.error('Invalid analysis response format:', analysisResponse.data);
+                  setAnalysisData({
+                      status: 'error',
+                      message: 'Invalid analysis data received from server'
+                  });
+              }
+          } catch (error) {
+              console.error('Error fetching analysis. Video ID:', videoId, error);
+              if (axios.isAxiosError(error)) {
+                  console.error('Response data:', error.response?.data);
+                  console.error('Response status:', error.response?.status);
+              }
+              setAnalysisData({
+                  status: 'error',
+                  message: 'Failed to fetch analysis data'
+              });
           }
-        } catch (error) {
-          console.error('Error checking video status:', error);
-        }
-      };
 
-      // Poll every 5 seconds
-      pollInterval.current = setInterval(checkStatus, 5000);
-      // Initial check
-      checkStatus();
-  };
+          clearInterval(pollInterval.current);
+        } else if (response.data.status === 'error') {
+          setUploadStatus('error');
+          setErrorMessage('Video processing failed');
+          clearInterval(pollInterval.current);
+        }
+      } catch (error) {
+        console.error('Error checking video status:', error);
+      }
+    };
+
+    // Poll every 5 seconds
+    pollInterval.current = setInterval(checkStatus, 5000);
+    // Initial check
+    checkStatus();
+};
 
   const handleSubmit = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();

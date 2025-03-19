@@ -48,6 +48,9 @@ interface ExerciseAnalysisProps {
 }
 
 const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => {
+  // Debug logging to see what data we're actually receiving
+  console.log("Analysis data received:", analysisData);
+  
   if (!analysisData) {
     return (
       <div className="text-gray-400">
@@ -71,13 +74,33 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
 
   const { metrics, time_series, tension_series, feedback, overall_score } = analysisData;
   
-  if (!metrics || !time_series) {
+  // More detailed debug checks to help identify issues
+  if (!metrics) {
+    console.error("Missing metrics in analysis data");
     return (
       <div className="text-gray-400">
-        <p>Incomplete analysis data</p>
+        <p>Missing metrics data</p>
       </div>
     );
   }
+  
+  if (!time_series) {
+    console.error("Missing time_series in analysis data");
+    return (
+      <div className="text-gray-400">
+        <p>Missing time series data</p>
+      </div>
+    );
+  }
+  
+  // Added safety checks to prevent errors
+  const volumeValue = metrics?.volume?.total_kg !== undefined ? metrics.volume.total_kg.toFixed(0) : "N/A";
+  const volumeScore = metrics?.volume?.score !== undefined ? metrics.volume.score : 0;
+  
+  const intensityValue = metrics?.intensity?.concentric_acceleration !== undefined 
+    ? metrics.intensity.concentric_acceleration.toFixed(1) 
+    : "N/A";
+  const intensityScore = metrics?.intensity?.score !== undefined ? metrics.intensity.score : 0;
 
   return (
     <div className="space-y-6">
@@ -88,7 +111,7 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
           <div className="text-center">
             <p className="text-md text-gray-400">Overall Training Score</p>
             <p className="text-4xl font-bold text-yellow-400">
-              {overall_score?.toFixed(1)}/100
+              {overall_score !== undefined ? overall_score.toFixed(1) : "N/A"}/100
             </p>
           </div>
         </div>
@@ -101,12 +124,12 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
             <Move className="h-8 w-8 text-blue-400 mb-2" />
             <p className="text-sm text-gray-400">Volume</p>
             <p className="text-xl font-bold text-blue-400">
-              {metrics.volume.total_kg.toFixed(0)} kg
+              {volumeValue} kg
             </p>
             <div className="mt-2 h-1 w-full bg-gray-700 rounded-full overflow-hidden">
               <div 
                 className="h-full bg-blue-400 rounded-full" 
-                style={{ width: `${metrics.volume.score}%` }}
+                style={{ width: `${volumeScore}%` }}
               />
             </div>
           </div>
@@ -117,12 +140,12 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
             <Clock className="h-8 w-8 text-green-400 mb-2" />
             <p className="text-sm text-gray-400">Time Under Tension</p>
             <p className="text-xl font-bold text-green-400">
-              {metrics.tension.total_time.toFixed(1)}s
+              {metrics?.tension?.total_time !== undefined ? metrics.tension.total_time.toFixed(1) : "N/A"}s
             </p>
             <div className="mt-2 h-1 w-full bg-gray-700 rounded-full overflow-hidden">
               <div 
                 className="h-full bg-green-400 rounded-full" 
-                style={{ width: `${metrics.tension.score}%` }}
+                style={{ width: `${metrics?.tension?.score || 0}%` }}
               />
             </div>
           </div>
@@ -133,12 +156,12 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
             <TrendingUp className="h-8 w-8 text-yellow-400 mb-2" />
             <p className="text-sm text-gray-400">Intensity</p>
             <p className="text-xl font-bold text-yellow-400">
-              {metrics.intensity.concentric_acceleration.toFixed(1)}
+              {intensityValue}
             </p>
             <div className="mt-2 h-1 w-full bg-gray-700 rounded-full overflow-hidden">
               <div 
                 className="h-full bg-yellow-400 rounded-full" 
-                style={{ width: `${metrics.intensity.score}%` }}
+                style={{ width: `${intensityScore}%` }}
               />
             </div>
           </div>
