@@ -93,14 +93,27 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
     );
   }
   
-  // Added safety checks to prevent errors
-  const volumeValue = metrics?.volume?.total_kg !== undefined ? metrics.volume.total_kg.toFixed(0) : "N/A";
-  const volumeScore = metrics?.volume?.score !== undefined ? metrics.volume.score : 0;
+  // Ensure all the necessary metrics are extracted properly with default values as fallback
+  const volumeValue = metrics?.volume?.total_kg !== undefined && !isNaN(metrics.volume.total_kg) 
+    ? metrics.volume.total_kg.toFixed(0) 
+    : "0";
+  const volumeScore = metrics?.volume?.score !== undefined && !isNaN(metrics.volume.score) 
+    ? metrics.volume.score 
+    : 0;
   
-  const intensityValue = metrics?.intensity?.concentric_acceleration !== undefined 
+  const intensityValue = metrics?.intensity?.concentric_acceleration !== undefined && !isNaN(metrics.intensity.concentric_acceleration)
     ? metrics.intensity.concentric_acceleration.toFixed(1) 
-    : "N/A";
-  const intensityScore = metrics?.intensity?.score !== undefined ? metrics.intensity.score : 0;
+    : "0.0";
+  const intensityScore = metrics?.intensity?.score !== undefined && !isNaN(metrics.intensity.score) 
+    ? metrics.intensity.score 
+    : 0;
+
+  const tensionValue = metrics?.tension?.total_time !== undefined && !isNaN(metrics.tension.total_time)
+    ? metrics.tension.total_time.toFixed(1)
+    : "0.0";
+  const tensionScore = metrics?.tension?.score !== undefined && !isNaN(metrics.tension.score)
+    ? metrics.tension.score
+    : 0;
 
   return (
     <div className="space-y-6">
@@ -111,7 +124,7 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
           <div className="text-center">
             <p className="text-md text-gray-400">Overall Training Score</p>
             <p className="text-4xl font-bold text-yellow-400">
-              {overall_score !== undefined ? overall_score.toFixed(1) : "N/A"}/100
+              {overall_score !== undefined && !isNaN(overall_score) ? overall_score.toFixed(1) : "0"}/100
             </p>
           </div>
         </div>
@@ -140,12 +153,12 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
             <Clock className="h-8 w-8 text-green-400 mb-2" />
             <p className="text-sm text-gray-400">Time Under Tension</p>
             <p className="text-xl font-bold text-green-400">
-              {metrics?.tension?.total_time !== undefined ? metrics.tension.total_time.toFixed(1) : "N/A"}s
+              {tensionValue}s
             </p>
             <div className="mt-2 h-1 w-full bg-gray-700 rounded-full overflow-hidden">
               <div 
                 className="h-full bg-green-400 rounded-full" 
-                style={{ width: `${metrics?.tension?.score || 0}%` }}
+                style={{ width: `${tensionScore}%` }}
               />
             </div>
           </div>

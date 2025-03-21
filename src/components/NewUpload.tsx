@@ -23,6 +23,18 @@ interface AnalysisData {
   feedback?: string[];
 }
 
+interface TimeSeriesPoint {
+  time?: number | string;
+  knee_angle?: number | string;
+  hip_position?: number | string;
+  acceleration?: number | string;
+}
+
+interface TensionPoint {
+  time?: number | string;
+  tension?: number | string;
+}
+
 const NewUpload = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -80,54 +92,78 @@ const NewUpload = () => {
           console.log('Extracted video ID for analysis fetch:', videoId);
           
           try {
-              const analysisResponse = await axios.get(
-                  `https://my-flask-app-service-309448793861.us-central1.run.app/exercise-analysis/${videoId}`
-              );
-              console.log('Raw analysis response:', analysisResponse);
-              
-              // Validate and process the response data before setting state
-              if (analysisResponse.data && analysisResponse.data.status === 'success') {
-                  // Make sure all expected properties exist to prevent rendering errors
-                  const processedData = {
-                      ...analysisResponse.data,
-                      metrics: {
-                          ...analysisResponse.data.metrics,
-                          // Ensure volume data exists
-                          volume: {
-                              total_kg: parseFloat(analysisResponse.data.metrics?.volume?.total_kg || 0),
-                              score: parseFloat(analysisResponse.data.metrics?.volume?.score || 0)
-                          },
-                          // Ensure intensity data exists
-                          intensity: {
-                              concentric_acceleration: parseFloat(analysisResponse.data.metrics?.intensity?.concentric_acceleration || 0),
-                              eccentric_acceleration: parseFloat(analysisResponse.data.metrics?.intensity?.eccentric_acceleration || 0),
-                              control_ratio: parseFloat(analysisResponse.data.metrics?.intensity?.control_ratio || 0),
-                              score: parseFloat(analysisResponse.data.metrics?.intensity?.score || 0)
-                          }
-                      }
-                  };
-                  
-                  console.log('Processed analysis data:', processedData);
-                  setAnalysisData(processedData);
-              } else {
-                  console.error('Invalid analysis response format:', analysisResponse.data);
-                  setAnalysisData({
-                      status: 'error',
-                      message: 'Invalid analysis data received from server'
-                  });
-              }
-          } catch (error) {
-              console.error('Error fetching analysis. Video ID:', videoId, error);
-              if (axios.isAxiosError(error)) {
-                  console.error('Response data:', error.response?.data);
-                  console.error('Response status:', error.response?.status);
-              }
-              setAnalysisData({
-                  status: 'error',
-                  message: 'Failed to fetch analysis data'
-              });
-          }
-
+            const analysisResponse = await axios.get(
+                `https://my-flask-app-service-309448793861.us-central1.run.app/exercise-analysis/${videoId}`
+            );
+            console.log('Raw analysis response:', analysisResponse);
+            
+            // Enhanced validation and data normalization
+            if (analysisResponse.data && analysisResponse.data.status === 'success') {
+                // Process data to ensure all required fields exist with proper types
+                const processedData = {
+                    ...analysisResponse.data,
+                    overall_score: parseFloat(analysisResponse.data.overall_score || 0),
+                    metrics: {
+                        // Process volume data
+                        volume: {
+                            total_kg: parseFloat(analysisResponse.data.metrics?.volume?.total_kg || 0),
+                            score: parseFloat(analysisResponse.data.metrics?.volume?.score || 0)
+                        },
+                        // Process tension data
+                        tension: {
+                            total_time: parseFloat(analysisResponse.data.metrics?.tension?.total_time || 0),
+                            periods: parseInt(analysisResponse.data.metrics?.tension?.periods || 0),
+                            score: parseFloat(analysisResponse.data.metrics?.tension?.score || 0)
+                        },
+                        // Process intensity data
+                        intensity: {
+                            concentric_acceleration: parseFloat(analysisResponse.data.metrics?.intensity?.concentric_acceleration || 0),
+                            eccentric_acceleration: parseFloat(analysisResponse.data.metrics?.intensity?.eccentric_acceleration || 0),
+                            control_ratio: parseFloat(analysisResponse.data.metrics?.intensity?.control_ratio || 0),
+                            score: parseFloat(analysisResponse.data.metrics?.intensity?.score || 0)
+                        },
+                        symmetry: parseFloat(analysisResponse.data.metrics?.symmetry || 0)
+                    }
+                };
+                
+                // Process time series data - ensure all values are numeric
+                if (processedData.time_series) {
+                    processedData.time_series = processedData.time_series.map((point: TimeSeriesPoint) => ({
+                        time: parseFloat(String(point.time || 0)),
+                        knee_angle: parseFloat(String(point.knee_angle || 0)),
+                        hip_position: parseFloat(String(point.hip_position || 0)),
+                        acceleration: parseFloat(String(point.acceleration || 0))
+                    }));
+                }
+                
+                // Process tension series data - ensure all values are numeric
+                if (processedData.tension_series) {
+                    processedData.tension_series = processedData.tension_series.map((point: TensionPoint) => ({
+                        time: parseFloat(String(point.time || 0)),
+                        tension: parseFloat(String(point.tension || 0))
+                    }));
+                }
+                
+                console.log('Processed analysis data:', processedData);
+                setAnalysisData(processedData);
+            } else {
+                console.error('Invalid analysis response format:', analysisResponse.data);
+                setAnalysisData({
+                    status: 'error',
+                    message: 'Invalid analysis data received from server'
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching analysis. Video ID:', videoId, error);
+            if (axios.isAxiosError(error)) {
+                console.error('Response data:', error.response?.data);
+                console.error('Response status:', error.response?.status);
+            }
+            setAnalysisData({
+                status: 'error',
+                message: 'Failed to fetch analysis data'
+            });
+        }
           clearInterval(pollInterval.current);
         } else if (response.data.status === 'error') {
           setUploadStatus('error');
