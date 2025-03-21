@@ -1,45 +1,18 @@
 import React from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { Award, Target, Activity, AlertCircle, Clock, TrendingUp, Move } from 'lucide-react';
-
-interface Metrics {
-  volume: {
-    total_kg: number;
-    score: number;
-  };
-  tension: {
-    total_time: number;
-    periods: number;
-    score: number;
-  };
-  intensity: {
-    concentric_acceleration: number;
-    eccentric_acceleration: number;
-    control_ratio: number;
-    score: number;
-  };
-  symmetry: number;
-}
-
-interface TimeSeriesPoint {
-  time: number;
-  knee_angle: number;
-  hip_position: number;
-  acceleration: number;
-}
-
-interface TensionPoint {
-  time: number;
-  tension: number;
-}
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Award, Target, Activity, AlertCircle } from 'lucide-react';
 
 interface AnalysisData {
   status: string;
-  message?: string;
-  overall_score?: number;
-  metrics?: Metrics;
-  time_series?: TimeSeriesPoint[];
-  tension_series?: TensionPoint[];
+  average_score?: number;
+  total_reps?: number;
+  rep_scores?: Array<{
+    total_score: number;
+    depth_score: number;
+    velocity_control_score: number;
+    symmetry_score: number;
+    stability_score: number;
+  }>;
   feedback?: string[];
 }
 
@@ -48,9 +21,7 @@ interface ExerciseAnalysisProps {
 }
 
 const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => {
-  // Debug logging to see what data we're actually receiving
-  console.log("Analysis data received:", analysisData);
-  
+  // Temporary debug render to see if component is receiving props
   if (!analysisData) {
     return (
       <div className="text-gray-400">
@@ -67,136 +38,68 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
           <p>Error analyzing exercise</p>
         </div>
         <p className="text-gray-400 mt-2">Status: {analysisData.status || 'not set'}</p>
-        {analysisData.message && <p className="text-gray-400 mt-1">{analysisData.message}</p>}
       </div>
     );
   }
 
-  const { metrics, time_series, tension_series, feedback, overall_score } = analysisData;
+  const { average_score, total_reps, rep_scores, feedback } = analysisData;
   
-  // More detailed debug checks to help identify issues
-  if (!metrics) {
-    console.error("Missing metrics in analysis data");
-    return (
-      <div className="text-gray-400">
-        <p>Missing metrics data</p>
-      </div>
-    );
-  }
-  
-  if (!time_series) {
-    console.error("Missing time_series in analysis data");
-    return (
-      <div className="text-gray-400">
-        <p>Missing time series data</p>
-      </div>
-    );
-  }
-  
-  // Ensure all the necessary metrics are extracted properly with default values as fallback
-  const volumeValue = metrics?.volume?.total_kg !== undefined && !isNaN(metrics.volume.total_kg) 
-    ? metrics.volume.total_kg.toFixed(0) 
-    : "0";
-  const volumeScore = metrics?.volume?.score !== undefined && !isNaN(metrics.volume.score) 
-    ? metrics.volume.score 
-    : 0;
-  
-  const intensityValue = metrics?.intensity?.concentric_acceleration !== undefined && !isNaN(metrics.intensity.concentric_acceleration)
-    ? metrics.intensity.concentric_acceleration.toFixed(1) 
-    : "0.0";
-  const intensityScore = metrics?.intensity?.score !== undefined && !isNaN(metrics.intensity.score) 
-    ? metrics.intensity.score 
-    : 0;
+  // Log destructured values
+  console.log('Destructured values:', { 
+    average_score, 
+    total_reps, 
+    rep_scores: rep_scores?.length, 
+    feedback: feedback?.length 
+  });
 
-  const tensionValue = metrics?.tension?.total_time !== undefined && !isNaN(metrics.tension.total_time)
-    ? metrics.tension.total_time.toFixed(1)
-    : "0.0";
-  const tensionScore = metrics?.tension?.score !== undefined && !isNaN(metrics.tension.score)
-    ? metrics.tension.score
-    : 0;
+  const chartData = rep_scores?.map((score, index) => ({
+    name: `Rep ${index + 1}`,
+    ...score
+  }));
 
   return (
     <div className="space-y-6">
-      {/* Overall Score Card */}
-      <div className="bg-gray-800 rounded-xl p-6 shadow-lg mb-6">
-        <div className="flex items-center justify-center space-x-4">
-          <Award className="h-12 w-12 text-yellow-400" />
-          <div className="text-center">
-            <p className="text-md text-gray-400">Overall Training Score</p>
-            <p className="text-4xl font-bold text-yellow-400">
-              {overall_score !== undefined && !isNaN(overall_score) ? overall_score.toFixed(1) : "0"}/100
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Training Variables - Side by Side */}
-      <div className="grid grid-cols-3 gap-4">
+      {/* Score Cards */}
+      <div className="grid grid-cols-2 gap-4">
         <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
-          <div className="flex flex-col items-center text-center">
-            <Move className="h-8 w-8 text-blue-400 mb-2" />
-            <p className="text-sm text-gray-400">Volume</p>
-            <p className="text-xl font-bold text-blue-400">
-              {volumeValue} kg
-            </p>
-            <div className="mt-2 h-1 w-full bg-gray-700 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-blue-400 rounded-full" 
-                style={{ width: `${volumeScore}%` }}
-              />
+          <div className="flex items-center space-x-4">
+            <Award className="h-8 w-8 text-blue-400" />
+            <div>
+              <p className="text-sm text-gray-400">Overall Score</p>
+              <p className="text-2xl font-bold text-blue-400">
+                {average_score?.toFixed(1)}/100
+              </p>
             </div>
           </div>
         </div>
-        
         <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
-          <div className="flex flex-col items-center text-center">
-            <Clock className="h-8 w-8 text-green-400 mb-2" />
-            <p className="text-sm text-gray-400">Time Under Tension</p>
-            <p className="text-xl font-bold text-green-400">
-              {tensionValue}s
-            </p>
-            <div className="mt-2 h-1 w-full bg-gray-700 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-green-400 rounded-full" 
-                style={{ width: `${tensionScore}%` }}
-              />
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
-          <div className="flex flex-col items-center text-center">
-            <TrendingUp className="h-8 w-8 text-yellow-400 mb-2" />
-            <p className="text-sm text-gray-400">Intensity</p>
-            <p className="text-xl font-bold text-yellow-400">
-              {intensityValue}
-            </p>
-            <div className="mt-2 h-1 w-full bg-gray-700 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-yellow-400 rounded-full" 
-                style={{ width: `${intensityScore}%` }}
-              />
+          <div className="flex items-center space-x-4">
+            <Activity className="h-8 w-8 text-green-400" />
+            <div>
+              <p className="text-sm text-gray-400">Total Reps</p>
+              <p className="text-2xl font-bold text-green-400">{total_reps}</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Time Series Charts - Volume & Intensity */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Volume Chart */}
+      {/* Performance Chart */}
+      {chartData && chartData.length > 0 && (
         <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
-          <h3 className="text-lg font-semibold text-white mb-4">Volume (Hip Position)</h3>
-          <div className="h-[250px]">
+          <h3 className="text-lg font-semibold text-white mb-6">Rep Performance</h3>
+          <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={time_series}>
+              <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                 <XAxis 
-                  dataKey="time" 
-                  stroke="#9CA3AF" 
-                  label={{ value: 'Time (s)', position: 'insideBottom', fill: '#9CA3AF' }}
+                  dataKey="name" 
+                  stroke="#9CA3AF"
+                  style={{ fontSize: '12px' }}
                 />
                 <YAxis 
                   stroke="#9CA3AF"
+                  style={{ fontSize: '12px' }}
+                  domain={[0, 100]}
                 />
                 <Tooltip
                   contentStyle={{
@@ -206,99 +109,40 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
                     color: '#F3F4F6'
                   }}
                 />
+                <Legend />
                 <Line 
                   type="monotone" 
-                  dataKey="hip_position" 
+                  dataKey="depth_score" 
                   stroke="#60A5FA" 
+                  name="Depth"
                   strokeWidth={2}
-                  dot={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Intensity Chart */}
-        <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
-          <h3 className="text-lg font-semibold text-white mb-4">Intensity (Acceleration)</h3>
-          <div className="h-[250px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={time_series}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis 
-                  dataKey="time" 
-                  stroke="#9CA3AF"
-                  label={{ value: 'Time (s)', position: 'insideBottom', fill: '#9CA3AF' }}
-                />
-                <YAxis 
-                  stroke="#9CA3AF"
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#1F2937',
-                    border: 'none',
-                    borderRadius: '8px',
-                    color: '#F3F4F6'
-                  }}
                 />
                 <Line 
                   type="monotone" 
-                  dataKey="acceleration" 
-                  stroke="#FBBF24" 
+                  dataKey="velocity_control_score" 
+                  stroke="#34D399" 
+                  name="Control"
                   strokeWidth={2}
-                  dot={false}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="symmetry_score" 
+                  stroke="#FBBF24" 
+                  name="Symmetry"
+                  strokeWidth={2}
                 />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
-      </div>
-
-      {/* Time Under Tension Chart */}
-      <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
-        <h3 className="text-lg font-semibold text-white mb-4">Time Under Tension</h3>
-        <div className="h-[200px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={tension_series}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis 
-                dataKey="time" 
-                stroke="#9CA3AF"
-                label={{ value: 'Time (s)', position: 'insideBottom', fill: '#9CA3AF' }}
-              />
-              <YAxis 
-                stroke="#9CA3AF"
-                domain={[0, 1]}
-                ticks={[0, 1]}
-                tickFormatter={(value) => value === 0 ? 'Rest' : 'Tension'}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#1F2937',
-                  border: 'none',
-                  borderRadius: '8px',
-                  color: '#F3F4F6'
-                }}
-                formatter={(value) => [value === 1 ? 'Under Tension' : 'Rest', 'State']}
-              />
-              <Area 
-                type="stepAfter" 
-                dataKey="tension" 
-                stroke="#10B981" 
-                fill="#10B981" 
-                fillOpacity={0.6}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+      )}
 
       {/* Feedback Section */}
       {feedback && feedback.length > 0 && (
         <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
           <div className="flex items-center space-x-3 mb-4">
             <AlertCircle className="h-6 w-6 text-blue-400" />
-            <h3 className="text-lg font-semibold text-white">Training Feedback</h3>
+            <h3 className="text-lg font-semibold text-white">Form Feedback</h3>
           </div>
           <div className="space-y-3">
             {feedback.map((item, index) => (
