@@ -18,8 +18,17 @@ import { generateVideoId } from "../utils/generateVideoId";
 interface TimeSeriesPoint {
   time: number;
   angle: number;
-  velocity: number;
-  acceleration: number;
+  hip_height: number;
+  hip_velocity: number;
+  hip_acceleration: number;
+  phase_intensity: number;
+  is_concentric: boolean;
+  accumulated_volume: number;
+}
+
+interface VolumePoint {
+  time: number;
+  volume: number;
 }
 
 interface TensionWindow {
@@ -29,6 +38,7 @@ interface TensionWindow {
 
 interface AnalysisMetrics {
   volume: number;
+  volume_unit: string;
   max_intensity: number;
   avg_intensity: number;
   time_under_tension: number;
@@ -38,6 +48,7 @@ interface AnalysisData {
   status: string;
   metrics?: AnalysisMetrics;
   time_series?: TimeSeriesPoint[];
+  volume_progression?: VolumePoint[];
   tension_windows?: TensionWindow[];
 }
 

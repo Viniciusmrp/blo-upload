@@ -5,8 +5,17 @@ import { Activity, Clock, TrendingUp } from 'lucide-react';
 interface TimeSeriesPoint {
   time: number;
   angle: number;
-  velocity: number;
-  acceleration: number;
+  hip_height: number;
+  hip_velocity: number;
+  hip_acceleration: number;
+  phase_intensity: number;
+  is_concentric: boolean;
+  accumulated_volume: number;
+}
+
+interface VolumePoint {
+  time: number;
+  volume: number;
 }
 
 interface TensionWindow {
@@ -16,6 +25,7 @@ interface TensionWindow {
 
 interface AnalysisMetrics {
   volume: number;
+  volume_unit: string;
   max_intensity: number;
   avg_intensity: number;
   time_under_tension: number;
@@ -25,6 +35,7 @@ interface AnalysisData {
   status: string;
   metrics?: AnalysisMetrics;
   time_series?: TimeSeriesPoint[];
+  volume_progression?: VolumePoint[];
   tension_windows?: TensionWindow[];
 }
 
@@ -80,7 +91,7 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
             <div>
               <p className="text-sm text-gray-400">Volume</p>
               <p className="text-2xl font-bold text-blue-400">
-                {metrics.volume.toFixed(0)}°
+                {metrics.volume.toFixed(2)} {metrics.volume_unit}
               </p>
             </div>
           </div>
@@ -113,12 +124,12 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
         </div>
       </div>
 
-      {/* Volume Chart (Knee Angle) */}
+      {/* Volume Chart (Accumulated Volume) */}
       <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
-        <h3 className="text-lg font-semibold text-white mb-6">Volume (Knee Angle)</h3>
+        <h3 className="text-lg font-semibold text-white mb-6">Volume Progression</h3>
         <div className="h-[200px]">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={time_series}>
+            <LineChart data={analysisData.volume_progression}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis 
                 dataKey="time" 
@@ -129,7 +140,7 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
               <YAxis 
                 stroke="#9CA3AF"
                 style={{ fontSize: '12px' }}
-                label={{ value: 'Angle (°)', angle: -90, position: 'insideLeft' }}
+                label={{ value: `Volume (${metrics.volume_unit})`, angle: -90, position: 'insideLeft' }}
               />
               <Tooltip
                 contentStyle={{
@@ -138,14 +149,14 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
                   borderRadius: '8px',
                   color: '#F3F4F6'
                 }}
-                formatter={(value) => [`${Number(value).toFixed(1)}°`, 'Knee Angle']}
+                formatter={(value) => [`${Number(value).toFixed(2)} ${metrics.volume_unit}`, 'Volume']}
                 labelFormatter={(label) => `Time: ${Number(label).toFixed(1)}s`}
               />
               <Line 
                 type="monotone" 
-                dataKey="angle" 
+                dataKey="volume" 
                 stroke="#60A5FA" 
-                name="Knee Angle"
+                name="Accumulated Volume"
                 strokeWidth={2}
                 dot={false}
               />
@@ -154,9 +165,9 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
         </div>
       </div>
 
-      {/* Intensity Chart (Acceleration) */}
+      {/* Intensity Chart (Hip Acceleration & Movement Phase) */}
       <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
-        <h3 className="text-lg font-semibold text-white mb-6">Intensity (Acceleration)</h3>
+        <h3 className="text-lg font-semibold text-white mb-6">Intensity (Movement Acceleration)</h3>
         <div className="h-[200px]">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={time_series}>
@@ -170,7 +181,7 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
               <YAxis 
                 stroke="#9CA3AF"
                 style={{ fontSize: '12px' }}
-                label={{ value: 'Acceleration', angle: -90, position: 'insideLeft' }}
+                label={{ value: 'Intensity', angle: -90, position: 'insideLeft' }}
               />
               <Tooltip
                 contentStyle={{
@@ -179,16 +190,31 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
                   borderRadius: '8px',
                   color: '#F3F4F6'
                 }}
-                formatter={(value) => [`${Number(value).toFixed(2)}`, 'Acceleration']}
+                formatter={(value, name) => {
+                  if (name === 'Concentric') {
+                    return [value ? 'Upward' : 'Downward', 'Movement Direction'];
+                  }
+                  return [`${Number(value).toFixed(2)}`, name];
+                }}
                 labelFormatter={(label) => `Time: ${Number(label).toFixed(1)}s`}
               />
               <Line 
                 type="monotone" 
-                dataKey="acceleration" 
+                dataKey="phase_intensity" 
                 stroke="#34D399" 
-                name="Acceleration"
+                name="Movement Intensity"
                 strokeWidth={2}
                 dot={false}
+              />
+              <Line 
+                type="step" 
+                dataKey="is_concentric" 
+                stroke="#9CA3AF" 
+                name="Concentric"
+                strokeWidth={1}
+                dot={false}
+                strokeDasharray="3 3"
+                opacity={0.5}
               />
             </LineChart>
           </ResponsiveContainer>
