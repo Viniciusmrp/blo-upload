@@ -29,6 +29,10 @@ interface AnalysisMetrics {
   max_intensity: number;
   avg_intensity: number;
   time_under_tension: number;
+  volume_score?: number;
+  intensity_score?: number;
+  tut_score?: number;
+  total_score?: number;
 }
 
 interface AnalysisData {
@@ -82,6 +86,74 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
 
   return (
     <div className="space-y-6">
+      {/* Total Score */}
+      {metrics.total_score !== undefined && (
+        <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
+          <h3 className="text-lg font-semibold text-white mb-4">Exercise Score</h3>
+          <div className="flex flex-col items-center">
+            <div className="relative w-40 h-40 mb-4">
+              <svg viewBox="0 0 100 100" className="w-full h-full">
+                <circle 
+                  cx="50" 
+                  cy="50" 
+                  r="45" 
+                  fill="transparent" 
+                  stroke="#374151" 
+                  strokeWidth="10"
+                />
+                <circle 
+                  cx="50" 
+                  cy="50" 
+                  r="45" 
+                  fill="transparent" 
+                  stroke={`hsl(${metrics.total_score}, 100%, 50%)`} 
+                  strokeWidth="10" 
+                  strokeDasharray={`${2 * Math.PI * 45 * metrics.total_score / 100} ${2 * Math.PI * 45 * (1 - metrics.total_score / 100)}`} 
+                  strokeDashoffset={Math.PI * 45 / 2} 
+                  transform="rotate(-90, 50, 50)"
+                />
+                <text x="50" y="55" textAnchor="middle" className="text-3xl font-bold" fill="white">
+                  {Math.round(metrics.total_score)}
+                </text>
+              </svg>
+            </div>
+            
+            <div className="grid grid-cols-3 gap-4 w-full">
+              <div className="text-center">
+                <div className="text-sm text-gray-400">Volume</div>
+                <div className="text-blue-400 font-bold">{Math.round(metrics.volume_score || 0)}</div>
+                <div className="w-full bg-gray-700 h-2 rounded-full mt-1">
+                  <div 
+                    className="bg-blue-400 h-2 rounded-full" 
+                    style={{ width: `${metrics.volume_score || 0}%` }}
+                  ></div>
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-sm text-gray-400">Intensity</div>
+                <div className="text-green-400 font-bold">{Math.round(metrics.intensity_score || 0)}</div>
+                <div className="w-full bg-gray-700 h-2 rounded-full mt-1">
+                  <div 
+                    className="bg-green-400 h-2 rounded-full" 
+                    style={{ width: `${metrics.intensity_score || 0}%` }}
+                  ></div>
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-sm text-gray-400">Time Under Tension</div>
+                <div className="text-amber-400 font-bold">{Math.round(metrics.tut_score || 0)}</div>
+                <div className="w-full bg-gray-700 h-2 rounded-full mt-1">
+                  <div 
+                    className="bg-amber-400 h-2 rounded-full" 
+                    style={{ width: `${metrics.tut_score || 0}%` }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Key Metrics Cards */}
       <div className="grid grid-cols-3 gap-4">
         {/* Volume Card */}
@@ -191,7 +263,7 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
                   color: '#F3F4F6'
                 }}
                 formatter={(value, name) => {
-                  if (name === 'Concentric') {
+                  if (typeof name === 'string' && name.includes('Concentric')) {
                     return [value ? 'Upward' : 'Downward', 'Movement Direction'];
                   }
                   return [`${Number(value).toFixed(2)}`, name];
@@ -233,6 +305,10 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
                 stroke="#9CA3AF"
                 style={{ fontSize: '12px' }}
                 label={{ value: 'Time (s)', position: 'insideBottom', offset: -5 }}
+                tickFormatter={(value) => value.toFixed(0)}
+                domain={['dataMin', 'dataMax']}
+                allowDecimals={false}
+                interval="preserveStartEnd"
               />
               <YAxis 
                 stroke="#9CA3AF"
@@ -248,6 +324,13 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
                   borderRadius: '8px',
                   color: '#F3F4F6'
                 }}
+                formatter={(value, name) => {
+                  if (typeof name === 'string' && name.includes('Tension Period')) {
+                    return [value === 1 ? 'Active' : 'Inactive', 'Status'];
+                  }
+                  return [value, name];
+                }}
+                labelFormatter={(label) => `Time: ${Number(label).toFixed(1)}s`}
               />
               {analysisData.tension_windows?.map((window, index) => {
                 // Create a dataset that marks periods of tension
