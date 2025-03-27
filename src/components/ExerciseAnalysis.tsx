@@ -298,17 +298,32 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
         <h3 className="text-lg font-semibold text-white mb-6">Time Under Tension</h3>
         <div className="h-[200px]">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={time_series}>
+            <LineChart>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis 
-                dataKey="time" 
+                type="number"
+                dataKey="time"
                 stroke="#9CA3AF"
                 style={{ fontSize: '12px' }}
                 label={{ value: 'Time (s)', position: 'insideBottom', offset: -5 }}
                 tickFormatter={(value) => value.toFixed(0)}
-                domain={['dataMin', 'dataMax']}
+                domain={[0, 'dataMax']}
                 allowDecimals={false}
-                interval="preserveStartEnd"
+                // Calculate number of ticks based on maximum time value
+                ticks={(() => {
+                  // Make sure time_series exists and has data
+                  if (!analysisData.time_series || analysisData.time_series.length === 0) {
+                    return [0, 5, 10, 15]; // Default ticks if no data
+                  }
+                  
+                  const maxTime = Math.max(...analysisData.time_series.map(p => p.time));
+                  const tickInterval = Math.ceil(maxTime / 10); // Aim for about 10 ticks
+                  const ticks = [];
+                  for (let i = 0; i <= maxTime; i += tickInterval) {
+                    ticks.push(i);
+                  }
+                  return ticks;
+                })()}
               />
               <YAxis 
                 stroke="#9CA3AF"
@@ -324,34 +339,41 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
                   borderRadius: '8px',
                   color: '#F3F4F6'
                 }}
-                formatter={(value, name) => {
-                  if (typeof name === 'string' && name.includes('Tension Period')) {
-                    return [value === 1 ? 'Active' : 'Inactive', 'Status'];
-                  }
-                  return [value, name];
-                }}
+                formatter={(value) => [value === 1 ? 'Active' : 'Inactive', 'Status']}
                 labelFormatter={(label) => `Time: ${Number(label).toFixed(1)}s`}
               />
-              {analysisData.tension_windows?.map((window, index) => {
-                // Create a dataset that marks periods of tension
-                const tensionData = time_series.map(point => ({
-                  ...point,
-                  tension: (point.time >= window.start && point.time <= window.end) ? 1 : 0
-                }));
-                
-                return (
-                  <Line 
-                    key={index}
-                    data={tensionData}
-                    type="step" 
-                    dataKey="tension" 
-                    stroke="#FBBF24" 
-                    name={`Tension Period ${index + 1}`}
-                    strokeWidth={2}
-                    dot={false}
-                  />
-                );
-              })}
+              
+              {/* Create a unified tension data array from all tension windows */}
+              {analysisData.time_series && analysisData.tension_windows && (
+                <Line 
+                  type="step" 
+                  data={(() => {
+                    // Get max time from time_series to ensure full range coverage
+                    const maxTime = Math.max(...analysisData.time_series.map(p => p.time));
+                    
+                    // Create higher resolution time points for smoother display
+                    const timePoints = [];
+                    const step = 0.1; // 100ms resolution
+                    
+                    for (let t = 0; t <= maxTime; t += step) {
+                      timePoints.push({
+                        time: t,
+                        // Check if this time point is within any tension window
+                        tension: analysisData.tension_windows.some(
+                          window => t >= window.start && t <= window.end
+                        ) ? 1 : 0
+                      });
+                    }
+                    
+                    return timePoints;
+                  })()}
+                  dataKey="tension" 
+                  stroke="#FBBF24" 
+                  name="Time Under Tension"
+                  strokeWidth={2}
+                  dot={false}
+                />
+              )}
             </LineChart>
           </ResponsiveContainer>
         </div>
