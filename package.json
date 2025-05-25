@@ -24,7 +24,7 @@
     "eslint-config-next": "13.3.0",
     "firebase": "^9.22.1",
     "firebase-admin": "^11.8.0",
-    "lucide-react": "^0.162.0",
+    "lucide-react": "^0.511.0",
     "nanoid": "^4.0.2",
     "next": "13.3.0",
     "postcss": "8.4.22",
