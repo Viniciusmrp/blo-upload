@@ -80,6 +80,9 @@ const NewUpload = () => {
                 const analysisResponse = await axios.get(
                     `https://my-flask-app-service-309448793861.us-central1.run.app/exercise-analysis/${videoId}`
                 );
+                
+                console.log('RAW Backend Analysis Response:', JSON.stringify(analysisResponse.data, null, 2));
+
                 setAnalysisData(analysisResponse.data);
             } catch (error) {
                 console.error('Error fetching analysis. Video ID:', videoId, error);
