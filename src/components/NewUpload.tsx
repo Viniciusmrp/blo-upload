@@ -16,12 +16,37 @@ import { Oval } from "react-loader-spinner";
 import { ArrowUp as Arrow, CheckCircle, Upload, Play, BarChart2, AlertCircle } from "lucide-react";
 import { generateVideoId } from "../utils/generateVideoId"; // Assuming this path is correct
 
+interface Metrics {
+  total_score: number;
+  intensity_score: number;
+  tut_score: number;
+  volume_score: number;
+  time_under_tension: number;
+  volume: number;
+  volume_unit: string;
+  // Include other metrics if you need them
+  avg_intensity?: number;
+  max_intensity?: number;
+}
+
+interface TensionWindow {
+  start: number;
+  end: number;
+}
+
+interface TimeSeriesDataPoint {
+  time: number;
+  angle: number;
+  hip_velocity: number;
+  hip_acceleration: number;
+  // Include other time series fields if needed
+}
+
 interface AnalysisData {
-  status: string;
-  average_score?: number;
-  total_reps?: number;
-  rep_scores?: Array<any>;
-  feedback?: string[];
+  status: 'success' | 'error'; // More specific type
+  metrics?: Metrics;
+  tension_windows?: TensionWindow[];
+  time_series?: TimeSeriesDataPoint[];
   error?: string;
 }
 
@@ -80,17 +105,20 @@ const NewUpload = () => {
                 const analysisResponse = await axios.get(
                     `https://my-flask-app-service-309448793861.us-central1.run.app/exercise-analysis/${videoId}`
                 );
-                
                 console.log('RAW Backend Analysis Response:', JSON.stringify(analysisResponse.data, null, 2));
 
-                setAnalysisData(analysisResponse.data);
-            } catch (error) {
-                console.error('Error fetching analysis. Video ID:', videoId, error);
-                if (axios.isAxiosError(error)) {
-                    console.error('Response data:', error.response?.data);
-                    console.error('Response status:', error.response?.status);
+                // The backend response structure now matches what our new ExerciseAnalysis component will expect.
+                // We can set it directly, as long as the status is 'success'.
+                if (analysisResponse.data.status === 'success') {
+                  setAnalysisData(analysisResponse.data);
+                } else {
+                  // Handle cases where status might not be 'success' but not a full error
+                  setAnalysisData({ status: 'error', error: 'Analysis did not complete successfully.' });
                 }
-                setAnalysisData({ status: 'error', error: 'Failed to fetch analysis data.' });
+
+            } catch (error) {
+                // ... (error handling remains the same)
+                setAnalysisData({ status: 'error', error: 'Failed to fetch or process analysis data.' });
             }
           } else if (response.data.status === 'error') {
             setUploadStatus('error');
