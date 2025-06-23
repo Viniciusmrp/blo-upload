@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "postinstall": "npx update-browserslist-db@latest"
+
   },
   "dependencies": {
     "@firebase/app-types": "^0.9.0",

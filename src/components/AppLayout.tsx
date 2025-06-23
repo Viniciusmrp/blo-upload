@@ -5,8 +5,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, UploadCloud, ListChecks, Settings } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext'; // Import the useAuth hook
-import LoginModal from './auth/LoginModal'; // Import the LoginModal
+import { useAuth } from '@/context/AuthContext';
+import LoginModal from './auth/LoginModal';
+import { Oval } from 'react-loader-spinner'; // Import a loader
 
 interface NavItemProps {
   icon: React.ElementType;
@@ -36,12 +37,20 @@ interface AppLayoutProps {
 }
 
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
-  const { currentUser } = useAuth(); // Get the current user from the context
+  // FIXED: Consume the `loading` state from the context
+  const { currentUser, loading } = useAuth();
 
-  // If there is no logged-in user, show the login modal instead of the dashboard.
+  // Show a full-screen loader while the auth state is being determined
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-slate-900">
+        <Oval height={80} width={80} color="#60A5FA" secondaryColor="#374151" />
+      </div>
+    );
+  }
+
+  // If not loading and no user, show the login modal
   if (!currentUser) {
-    // We render the landing page in the background and overlay the modal.
-    // Or just render the modal for a cleaner look.
     return <LoginModal />;
   }
 
@@ -62,38 +71,14 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         </div>
         <nav className="flex-grow">
           <ul className="space-y-2">
-            <li>
-              <NavItem
-                icon={Home}
-                label="Home"
-                href="/dashboard"
-              />
-            </li>
-            <li>
-              <NavItem
-                icon={UploadCloud}
-                label="Upload"
-                href="/dashboard/upload"
-              />
-            </li>
-            <li>
-              <NavItem
-                icon={ListChecks}
-                label="Sessions Management"
-                href="/dashboard/sessions"
-              />
-            </li>
+            <li><NavItem icon={Home} label="Home" href="/dashboard" /></li>
+            <li><NavItem icon={UploadCloud} label="Upload" href="/dashboard/upload" /></li>
+            <li><NavItem icon={ListChecks} label="Sessions Management" href="/dashboard/sessions" /></li>
           </ul>
         </nav>
         <div>
           <ul>
-            <li>
-              <NavItem
-                icon={Settings}
-                label="Settings"
-                href="/dashboard/settings"
-              />
-            </li>
+            <li><NavItem icon={Settings} label="Settings" href="/dashboard/settings" /></li>
           </ul>
         </div>
       </aside>

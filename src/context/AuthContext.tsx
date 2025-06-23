@@ -12,7 +12,6 @@ import {
   UserCredential 
 } from 'firebase/auth';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { Oval } from 'react-loader-spinner';
 
 // Use environment variables for Firebase config
 const firebaseConfig = {
@@ -22,14 +21,12 @@ const firebaseConfig = {
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
 // Initialize Firebase
 const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth: Auth = getAuth(app);
 
-// FIXED: Define the correct, simplified signatures for our context functions.
 interface AuthContextType {
   currentUser: User | null;
   loading: boolean;
@@ -56,20 +53,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const value: AuthContextType = {
     currentUser,
     loading,
-    // The implementation correctly uses the `auth` object from the module scope.
     login: (email, password) => signInWithEmailAndPassword(auth, email, password),
     signup: (email, password) => createUserWithEmailAndPassword(auth, email, password),
     logout: () => signOut(auth),
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-slate-900">
-        <Oval height={80} width={80} color="#60A5FA" secondaryColor="#374151" />
-      </div>
-    );
-  }
-
+  // FIXED: Always render the provider. Never conditionally render it.
+  // The consuming components will use the `loading` value to decide what to show.
   return (
     <AuthContext.Provider value={value}>
       {children}
