@@ -1,32 +1,32 @@
 // src/app/dashboard/page.tsx
-import AppLayout from '@/components/AppLayout';
 import ExerciseAnalysis from '@/components/ExerciseAnalysis';
-// If you want the Inter font here too, import it. Otherwise, see Step 3.
 
 export const dynamic = 'force-dynamic';
 
-// Mock data for ExerciseAnalysis - replace with your actual data or state later
 const mockAnalysisData = {
   status: 'success' as const,
-  average_score: 88.5,
-  total_reps: 12,
-  rep_scores: [
-    { total_score: 85, depth_score: 90, velocity_control_score: 80, symmetry_score: 85, stability_score: 85 },
-    { total_score: 90, depth_score: 92, velocity_control_score: 88, symmetry_score: 90, stability_score: 90 },
-    // Add more mock rep scores if needed
+  metrics: {
+    total_score: 88.5,
+    intensity_score: 92.1,
+    tut_score: 85.0,
+    volume_score: 89.0,
+    time_under_tension: 25.5,
+    volume: 1200,
+    volume_unit: 'kg',
+  },
+  tension_windows: [
+    { start: 2, end: 4 },
+    { start: 6, end: 8 },
   ],
-  feedback: [
-    "Great overall form! Keep focusing on consistent depth.",
-    "Symmetry looks good, maintain core engagement.",
+  time_series: [
+    { time: 1, angle: 160, hip_velocity: 0, hip_acceleration: 0 },
+    { time: 2, angle: 90, hip_velocity: 0.5, hip_acceleration: 0.2 },
   ]
 };
 
 export default function DashboardPage() {
+  // No AppLayout wrapper needed here anymore
   return (
-    // <div className={inter.className}> {/* If applying Inter font here */}
-    <AppLayout>
-      <ExerciseAnalysis analysisData={mockAnalysisData} />
-    </AppLayout>
-    // </div>
+    <ExerciseAnalysis analysisData={mockAnalysisData} />
   );
 }
