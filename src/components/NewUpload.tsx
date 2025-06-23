@@ -12,10 +12,10 @@ import {
 } from "react";
 import axios from "axios";
 import { Oval } from "react-loader-spinner";
-// MODIFIED: Added AlertCircle to the import
-import { ArrowUp as Arrow, CheckCircle, Upload, Play, BarChart2, AlertCircle } from "lucide-react";
-import { generateVideoId } from "../utils/generateVideoId"; // Assuming this path is correct
+import { ArrowUp as Arrow, CheckCircle, Upload, Play, BarChart2, AlertCircle, RefreshCw } from "lucide-react"; // Import RefreshCw for the new button
+import { generateVideoId } from "../utils/generateVideoId";
 
+// Keep your existing interfaces (Metrics, TensionWindow, TimeSeriesDataPoint, AnalysisData) as they are.
 interface Metrics {
   total_score: number;
   intensity_score: number;
@@ -24,7 +24,6 @@ interface Metrics {
   time_under_tension: number;
   volume: number;
   volume_unit: string;
-  // Include other metrics if you need them
   avg_intensity?: number;
   max_intensity?: number;
 }
@@ -39,16 +38,16 @@ interface TimeSeriesDataPoint {
   angle: number;
   hip_velocity: number;
   hip_acceleration: number;
-  // Include other time series fields if needed
 }
 
 interface AnalysisData {
-  status: 'success' | 'error'; // More specific type
+  status: 'success' | 'error';
   metrics?: Metrics;
   tension_windows?: TensionWindow[];
   time_series?: TimeSeriesDataPoint[];
   error?: string;
 }
+
 
 const NewUpload = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -107,17 +106,13 @@ const NewUpload = () => {
                 );
                 console.log('RAW Backend Analysis Response:', JSON.stringify(analysisResponse.data, null, 2));
 
-                // The backend response structure now matches what our new ExerciseAnalysis component will expect.
-                // We can set it directly, as long as the status is 'success'.
                 if (analysisResponse.data.status === 'success') {
                   setAnalysisData(analysisResponse.data);
                 } else {
-                  // Handle cases where status might not be 'success' but not a full error
                   setAnalysisData({ status: 'error', error: 'Analysis did not complete successfully.' });
                 }
 
             } catch (error) {
-                // ... (error handling remains the same)
                 setAnalysisData({ status: 'error', error: 'Failed to fetch or process analysis data.' });
             }
           } else if (response.data.status === 'error') {
@@ -183,21 +178,27 @@ const NewUpload = () => {
     }
   };
 
-  const clearFormDataAndSelection = () => {
+  const handleUploadAnother = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    setUploadProgress(0);
+    setUploadStatus('idle');
     setEmail("");
     setWeight("");
     setHeight("");
     setLoad("");
-    handleClearPreview();
-    setAnalysisData(null);
-    setProcessedVideoUrl(null);
-    setUploadStatus('idle');
     setErrorMessage('');
+    setProcessedVideoUrl(null);
+    setAnalysisData(null);
+    if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+    }
   };
+
 
   const handleMediaSelected = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null;
-    setProcessedVideoUrl(null); 
+    setProcessedVideoUrl(null);
     setAnalysisData(null);
     setUploadStatus('idle');
     setErrorMessage('');
@@ -210,7 +211,7 @@ const NewUpload = () => {
         window.URL.revokeObjectURL(video.src);
         const isPortraitValue = video.videoHeight > video.videoWidth;
         setIsPortrait(isPortraitValue);
-        setSelectedFile(file); 
+        setSelectedFile(file);
       };
       video.src = URL.createObjectURL(file);
     } else {
@@ -232,6 +233,55 @@ const NewUpload = () => {
     }
   };
 
+  // Condition to show the results view
+  if (uploadStatus === 'complete' && analysisData) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white p-4 sm:p-6 lg:p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-between items-center mb-6">
+             <h1 className="text-2xl font-bold text-blue-400">Analysis Complete</h1>
+             <button
+              onClick={handleUploadAnother}
+              className="flex items-center justify-center bg-blue-500 hover:bg-blue-600 rounded-lg py-2 px-4 text-white font-medium transition-colors"
+            >
+              <RefreshCw className="h-5 w-5 mr-2" />
+              Upload Another Video
+            </button>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-1">
+              {processedVideoUrl && (
+                  <div className="bg-gray-800 rounded-xl p-4 shadow-lg sticky top-6">
+                      <h3 className="text-lg font-semibold mb-4">Processed Video</h3>
+                      <video
+                          src={processedVideoUrl}
+                          controls
+                          className="w-full rounded-lg"
+                          key={processedVideoUrl}
+                      />
+                  </div>
+              )}
+            </div>
+            <div className="lg:col-span-2">
+                {analysisData.status === 'success' ? (
+                    <ExerciseAnalysis analysisData={analysisData} />
+                ) : (
+                    <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
+                        <div className="text-red-400 flex items-center gap-2">
+                            <AlertCircle className="h-5 w-5" />
+                            <p>Analysis Error: {analysisData.error || 'Failed to load analysis results'}</p>
+                        </div>
+                    </div>
+                )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+
+  // Default view for uploading
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       <header className="border-b border-gray-800">
@@ -247,7 +297,7 @@ const NewUpload = () => {
                 <h2 className="text-xl font-semibold mb-2">Upload Your Exercise Video</h2>
                 <p className="text-gray-400">Upload your video to analyze your form and technique</p>
               </div>
-              <div 
+              <div
                 className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-blue-400 transition-colors"
                 onClick={handleButtonClick}
               >
@@ -307,7 +357,6 @@ const NewUpload = () => {
                 disabled={!selectedFile || uploadStatus === 'uploading' || uploadStatus === 'processing'}
                 className="w-full flex items-center justify-center bg-blue-500 hover:bg-blue-600 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg py-3 px-4 text-white font-medium transition-colors h-12"
               >
-                {/* MODIFIED: Simplified loading state check for the spinner */}
                 {(uploadStatus === 'uploading' || uploadStatus === 'processing') ? (
                   <Oval
                     height={24} width={24} color="white" visible={true}
@@ -323,14 +372,14 @@ const NewUpload = () => {
             </div>
           </div>
           <div className="space-y-6">
-            {(previewUrl || processedVideoUrl) && (
+            {(previewUrl) && (
               <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
                 <h3 className="text-lg font-semibold mb-4">
-                  {(uploadStatus === 'complete' && processedVideoUrl) ? 'Processed Video' : 'Video Preview'}
+                  Video Preview
                 </h3>
                 <video
-                  src={ (uploadStatus === 'complete' && processedVideoUrl) ? processedVideoUrl : previewUrl || ''}
-                  controls className="w-full rounded-lg" key={processedVideoUrl || previewUrl}
+                  src={previewUrl || ''}
+                  controls className="w-full rounded-lg" key={previewUrl}
                 />
               </div>
             )}
@@ -358,18 +407,6 @@ const NewUpload = () => {
                 />
                 <p className="mt-4 text-gray-400">Analyzing your exercise form...</p>
               </div>
-            )}
-            {uploadStatus === 'complete' && analysisData && analysisData.status === 'success' && (
-              <ExerciseAnalysis analysisData={analysisData} />
-            )}
-            {analysisData && analysisData.status === 'error' && (
-               <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
-                 <div className="text-red-400 flex items-center gap-2">
-                   {/* AlertCircle is now imported and can be used */}
-                   <AlertCircle className="h-5 w-5" />
-                   <p>Analysis Error: {analysisData.error || 'Failed to load analysis results'}</p>
-                 </div>
-               </div>
             )}
           </div>
         </div>
