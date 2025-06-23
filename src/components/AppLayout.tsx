@@ -1,20 +1,22 @@
 "use client";
 
-import React from 'react'; // Removed useState as activePage state is no longer managed here
+import React from 'react';
 import Image from 'next/image';
-import Link from 'next/link'; // Import Link
-import { usePathname } from 'next/navigation'; // Import usePathname
-import { Home, UploadCloud, ListChecks, Settings } from 'lucide-react'; // Removed unused icons for this component
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Home, UploadCloud, ListChecks, Settings } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext'; // Import the useAuth hook
+import LoginModal from './auth/LoginModal'; // Import the LoginModal
 
 interface NavItemProps {
   icon: React.ElementType;
   label: string;
-  href: string; // href is now mandatory
+  href: string;
 }
 
 const NavItem: React.FC<NavItemProps> = ({ icon: Icon, label, href }) => {
-  const pathname = usePathname(); // Get current path
-  const isActive = pathname === href || (href === "/dashboard" && pathname.startsWith("/dashboard/analysis")); // Adjust active logic if /dashboard shows analysis
+  const pathname = usePathname();
+  const isActive = pathname === href || (href === "/dashboard" && pathname.startsWith("/dashboard/analysis"));
 
   return (
     <Link href={href} legacyBehavior>
@@ -34,15 +36,21 @@ interface AppLayoutProps {
 }
 
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
-  // const userName = "Vinicius Perez"; // No longer used
+  const { currentUser } = useAuth(); // Get the current user from the context
 
+  // If there is no logged-in user, show the login modal instead of the dashboard.
+  if (!currentUser) {
+    // We render the landing page in the background and overlay the modal.
+    // Or just render the modal for a cleaner look.
+    return <LoginModal />;
+  }
+
+  // If user is logged in, show the dashboard layout
   return (
-    <div className="flex h-screen bg-slate-900 text-gray-100 font-inter"> {/* Ensure font-inter is globally applied or added here if needed */}
-      {/* Sidebar */}
+    <div className="flex h-screen bg-slate-900 text-gray-100 font-inter">
       <aside className="w-64 bg-gray-800 p-6 space-y-6 border-r border-gray-700 flex flex-col">
-        {/* Logo Image */}
         <div className="flex justify-center items-center mb-6">
-          <Link href="/dashboard"> {/* Logo links to dashboard home */}
+          <Link href="/dashboard">
               <Image
                 src="/logo-white.svg"
                 alt="Argus Platform Logo"
@@ -52,12 +60,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               />
           </Link>
         </div>
-
-        {/* Navigation */}
         <nav className="flex-grow">
           <ul className="space-y-2">
             <li>
-              {/* Assuming /dashboard shows ExerciseAnalysis or a general dashboard home */}
               <NavItem
                 icon={Home}
                 label="Home"
@@ -68,34 +73,30 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               <NavItem
                 icon={UploadCloud}
                 label="Upload"
-                href="/dashboard/upload" // New route for upload page
+                href="/dashboard/upload"
               />
             </li>
             <li>
               <NavItem
                 icon={ListChecks}
                 label="Sessions Management"
-                href="/dashboard/sessions" // Placeholder - create this page later
+                href="/dashboard/sessions"
               />
             </li>
           </ul>
         </nav>
-
-        {/* Settings at the bottom */}
         <div>
           <ul>
             <li>
               <NavItem
                 icon={Settings}
                 label="Settings"
-                href="/dashboard/settings" // Placeholder - create this page later
+                href="/dashboard/settings"
               />
             </li>
           </ul>
         </div>
       </aside>
-
-      {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-900 p-6 md:p-8 lg:p-10">
           {children}
