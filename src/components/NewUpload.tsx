@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import React from 'react';
 import {
   ChangeEvent,
-  FormEvent,
   useEffect,
   useRef,
   useState,
@@ -12,7 +11,8 @@ import {
 } from "react";
 import axios from "axios";
 import { Oval } from "react-loader-spinner";
-import { ArrowUp as Arrow, CheckCircle, Upload, Play, BarChart2, AlertCircle, RefreshCw } from "lucide-react"; // Import RefreshCw for the new button
+// MODIFIED: Added AlertCircle to the import line
+import { CheckCircle, Upload, RefreshCw, AlertCircle } from "lucide-react";
 import { generateVideoId } from "../utils/generateVideoId";
 
 // Keep your existing interfaces (Metrics, TensionWindow, TimeSeriesDataPoint, AnalysisData) as they are.
@@ -47,7 +47,6 @@ interface AnalysisData {
   time_series?: TimeSeriesDataPoint[];
   error?: string;
 }
-
 
 const NewUpload = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -89,43 +88,43 @@ const NewUpload = () => {
   }, []);
 
   const startPollingForProcessing = async (videoName: string) => {
-      setUploadStatus('processing');
-      const checkStatus = async () => {
-        try {
-          const response = await axios.get(
-            `https://my-flask-app-service-309448793861.us-central1.run.app/video-status/${videoName}`
-          );
-          if (response.data.status === 'complete') {
-            setUploadStatus('complete');
-            setProcessedVideoUrl(response.data.processed_url);
-            clearInterval(pollInterval.current);
-            const videoId = videoName.split('.')[0];
-            try {
-                const analysisResponse = await axios.get(
-                    `https://my-flask-app-service-309448793861.us-central1.run.app/exercise-analysis/${videoId}`
-                );
-                console.log('RAW Backend Analysis Response:', JSON.stringify(analysisResponse.data, null, 2));
+    setUploadStatus('processing');
+    const checkStatus = async () => {
+      try {
+        const response = await axios.get(
+          `https://my-flask-app-service-309448793861.us-central1.run.app/video-status/${videoName}`
+        );
+        if (response.data.status === 'complete') {
+          setUploadStatus('complete');
+          setProcessedVideoUrl(response.data.processed_url);
+          clearInterval(pollInterval.current);
+          const videoId = videoName.split('.')[0];
+          try {
+            const analysisResponse = await axios.get(
+              `https://my-flask-app-service-309448793861.us-central1.run.app/exercise-analysis/${videoId}`
+            );
+            console.log('RAW Backend Analysis Response:', JSON.stringify(analysisResponse.data, null, 2));
 
-                if (analysisResponse.data.status === 'success') {
-                  setAnalysisData(analysisResponse.data);
-                } else {
-                  setAnalysisData({ status: 'error', error: 'Analysis did not complete successfully.' });
-                }
-
-            } catch (error) {
-                setAnalysisData({ status: 'error', error: 'Failed to fetch or process analysis data.' });
+            if (analysisResponse.data.status === 'success') {
+              setAnalysisData(analysisResponse.data);
+            } else {
+              setAnalysisData({ status: 'error', error: 'Analysis did not complete successfully.' });
             }
-          } else if (response.data.status === 'error') {
-            setUploadStatus('error');
-            setErrorMessage('Video processing failed on the server.');
-            clearInterval(pollInterval.current);
+
+          } catch (error) {
+            setAnalysisData({ status: 'error', error: 'Failed to fetch or process analysis data.' });
           }
-        } catch (error) {
-          console.error('Error checking video status:', error);
+        } else if (response.data.status === 'error') {
+          setUploadStatus('error');
+          setErrorMessage('Video processing failed on the server.');
+          clearInterval(pollInterval.current);
         }
-      };
-      pollInterval.current = setInterval(checkStatus, 5000);
-      checkStatus();
+      } catch (error) {
+        console.error('Error checking video status:', error);
+      }
+    };
+    pollInterval.current = setInterval(checkStatus, 5000);
+    checkStatus();
   };
 
   const handleSubmit = async (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -191,7 +190,7 @@ const NewUpload = () => {
     setProcessedVideoUrl(null);
     setAnalysisData(null);
     if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+      fileInputRef.current.value = "";
     }
   };
 
@@ -219,14 +218,6 @@ const NewUpload = () => {
     }
   };
 
-  const handleClearPreview = () => {
-    setPreviewUrl(null);
-    setSelectedFile(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
-
   const handleButtonClick = () => {
     if (fileInputRef.current) {
       fileInputRef.current.click();
@@ -239,8 +230,8 @@ const NewUpload = () => {
       <div className="min-h-screen bg-gray-900 text-white p-4 sm:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-6">
-             <h1 className="text-2xl font-bold text-blue-400">Analysis Complete</h1>
-             <button
+            <h1 className="text-2xl font-bold text-blue-400">Analysis Complete</h1>
+            <button
               onClick={handleUploadAnother}
               className="flex items-center justify-center bg-blue-500 hover:bg-blue-600 rounded-lg py-2 px-4 text-white font-medium transition-colors"
             >
@@ -248,32 +239,30 @@ const NewUpload = () => {
               Upload Another Video
             </button>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-1">
-              {processedVideoUrl && (
-                  <div className="bg-gray-800 rounded-xl p-4 shadow-lg sticky top-6">
-                      <h3 className="text-lg font-semibold mb-4">Processed Video</h3>
-                      <video
-                          src={processedVideoUrl}
-                          controls
-                          className="w-full rounded-lg"
-                          key={processedVideoUrl}
-                      />
-                  </div>
-              )}
-            </div>
-            <div className="lg:col-span-2">
-                {analysisData.status === 'success' ? (
-                    <ExerciseAnalysis analysisData={analysisData} />
-                ) : (
-                    <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
-                        <div className="text-red-400 flex items-center gap-2">
-                            <AlertCircle className="h-5 w-5" />
-                            <p>Analysis Error: {analysisData.error || 'Failed to load analysis results'}</p>
-                        </div>
-                    </div>
-                )}
-            </div>
+
+          <div className="space-y-8">
+            {analysisData.status === 'success' ? (
+              <ExerciseAnalysis analysisData={analysisData} />
+            ) : (
+              <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
+                <div className="text-red-400 flex items-center gap-2">
+                  <AlertCircle className="h-5 w-5" />
+                  <p>Analysis Error: {analysisData.error || 'Failed to load analysis results'}</p>
+                </div>
+              </div>
+            )}
+
+            {processedVideoUrl && (
+              <div className="bg-gray-800 rounded-xl p-4 shadow-lg">
+                <h3 className="text-lg font-semibold mb-4 text-center">Processed Video</h3>
+                <video
+                  src={processedVideoUrl}
+                  controls
+                  className="w-full max-w-md mx-auto rounded-lg"
+                  key={processedVideoUrl}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -283,134 +272,136 @@ const NewUpload = () => {
 
   // Default view for uploading
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      <header className="border-b border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center">
-          <h1 className="text-2xl font-bold text-blue-400">Exercise Analysis</h1>
-        </div>
-      </header>
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
-            <div className="space-y-6">
-              <div className="text-center">
-                <h2 className="text-xl font-semibold mb-2">Upload Your Exercise Video</h2>
-                <p className="text-gray-400">Upload your video to analyze your form and technique</p>
-              </div>
-              <div
-                className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-blue-400 transition-colors"
-                onClick={handleButtonClick}
-              >
-                {!selectedFile ? (
-                  <>
-                    <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                    <p className="mt-4 text-sm text-gray-400">
-                      Click to upload or drag and drop your video
-                    </p>
-                  </>
-                ) : (
-                  <div className="space-y-4">
-                    <CheckCircle className="mx-auto h-12 w-12 text-green-400" />
-                    <p className="text-sm text-gray-400">{selectedFile.name}</p>
-                  </div>
-                )}
-              </div>
-              <input
-                type="file"
-                accept="video/*,video/quicktime,.mov,.qt"
-                onChange={handleMediaSelected}
-                ref={fileInputRef}
-                className="hidden"
-              />
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label htmlFor="email" className="text-sm text-gray-400">Email</label>
-                  <input
-                    id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-gray-700 rounded-lg border border-gray-600 p-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="weight" className="text-sm text-gray-400">Weight (kg)</label>
-                  <input
-                    id="weight" type="text" value={weight} onChange={(e) => setWeight(e.target.value)}
-                    className="w-full bg-gray-700 rounded-lg border border-gray-600 p-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="height" className="text-sm text-gray-400">Height (cm)</label>
-                  <input
-                    id="height" type="text" value={height} onChange={(e) => setHeight(e.target.value)}
-                    className="w-full bg-gray-700 rounded-lg border border-gray-600 p-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="load" className="text-sm text-gray-400">Load (kg)</label>
-                  <input
-                    id="load" type="text" value={load} onChange={(e) => setLoad(e.target.value)}
-                    className="w-full bg-gray-700 rounded-lg border border-gray-600 p-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                  />
-                </div>
-              </div>
-              <button
-                onClick={handleSubmit}
-                disabled={!selectedFile || uploadStatus === 'uploading' || uploadStatus === 'processing'}
-                className="w-full flex items-center justify-center bg-blue-500 hover:bg-blue-600 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg py-3 px-4 text-white font-medium transition-colors h-12"
-              >
-                {(uploadStatus === 'uploading' || uploadStatus === 'processing') ? (
-                  <Oval
-                    height={24} width={24} color="white" visible={true}
-                    ariaLabel="oval-loading" secondaryColor="gray" strokeWidth={4} strokeWidthSecondary={4}
-                  />
-                ) : (
-                  'Analyze Video'
-                )}
-              </button>
-              {errorMessage && (
-                <p className="text-sm text-red-400 text-center">{errorMessage}</p>
-              )}
-            </div>
+    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-4xl">
+        <header className="border-b border-gray-800 mb-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center">
+            <h1 className="text-2xl font-bold text-blue-400">Exercise Analysis</h1>
           </div>
-          <div className="space-y-6">
-            {(previewUrl) && (
-              <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
-                <h3 className="text-lg font-semibold mb-4">
-                  Video Preview
-                </h3>
-                <video
-                  src={previewUrl || ''}
-                  controls className="w-full rounded-lg" key={previewUrl}
+        </header>
+        <main>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
+              <div className="space-y-6">
+                <div className="text-center">
+                  <h2 className="text-xl font-semibold mb-2">Upload Your Exercise Video</h2>
+                  <p className="text-gray-400">Upload your video to analyze your form and technique</p>
+                </div>
+                <div
+                  className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-blue-400 transition-colors"
+                  onClick={handleButtonClick}
+                >
+                  {!selectedFile ? (
+                    <>
+                      <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                      <p className="mt-4 text-sm text-gray-400">
+                        Click to upload or drag and drop your video
+                      </p>
+                    </>
+                  ) : (
+                    <div className="space-y-4">
+                      <CheckCircle className="mx-auto h-12 w-12 text-green-400" />
+                      <p className="text-sm text-gray-400">{selectedFile.name}</p>
+                    </div>
+                  )}
+                </div>
+                <input
+                  type="file"
+                  accept="video/*,video/quicktime,.mov,.qt"
+                  onChange={handleMediaSelected}
+                  ref={fileInputRef}
+                  className="hidden"
                 />
-              </div>
-            )}
-            {uploadStatus === 'uploading' && (
-              <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-200">Uploading...</span>
-                    <span className="text-sm text-gray-400">{uploadProgress}%</span>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label htmlFor="email" className="text-sm text-gray-400">Email</label>
+                    <input
+                      id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                      className="w-full bg-gray-700 rounded-lg border border-gray-600 p-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                    />
                   </div>
-                  <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                    <div
-                      className="h-2 bg-blue-500 rounded-full transition-all duration-300"
-                      style={{ width: `${uploadProgress}%` }}
+                  <div className="space-y-2">
+                    <label htmlFor="weight" className="text-sm text-gray-400">Weight (kg)</label>
+                    <input
+                      id="weight" type="text" value={weight} onChange={(e) => setWeight(e.target.value)}
+                      className="w-full bg-gray-700 rounded-lg border border-gray-600 p-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="height" className="text-sm text-gray-400">Height (cm)</label>
+                    <input
+                      id="height" type="text" value={height} onChange={(e) => setHeight(e.target.value)}
+                      className="w-full bg-gray-700 rounded-lg border border-gray-600 p-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="load" className="text-sm text-gray-400">Load (kg)</label>
+                    <input
+                      id="load" type="text" value={load} onChange={(e) => setLoad(e.target.value)}
+                      className="w-full bg-gray-700 rounded-lg border border-gray-600 p-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
                     />
                   </div>
                 </div>
+                <button
+                  onClick={handleSubmit}
+                  disabled={!selectedFile || uploadStatus === 'uploading' || uploadStatus === 'processing'}
+                  className="w-full flex items-center justify-center bg-blue-500 hover:bg-blue-600 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg py-3 px-4 text-white font-medium transition-colors h-12"
+                >
+                  {(uploadStatus === 'uploading' || uploadStatus === 'processing') ? (
+                    <Oval
+                      height={24} width={24} color="white" visible={true}
+                      ariaLabel="oval-loading" secondaryColor="gray" strokeWidth={4} strokeWidthSecondary={4}
+                    />
+                  ) : (
+                    'Analyze Video'
+                  )}
+                </button>
+                {errorMessage && (
+                  <p className="text-sm text-red-400 text-center">{errorMessage}</p>
+                )}
               </div>
-            )}
-            {uploadStatus === 'processing' && (
-              <div className="bg-gray-800 rounded-xl p-6 shadow-lg flex flex-col items-center justify-center text-center h-40">
-                <Oval
-                  height={40} width={40} color="#60A5FA" visible={true}
-                  ariaLabel="oval-loading" secondaryColor="#374151" strokeWidth={4} strokeWidthSecondary={4}
-                />
-                <p className="mt-4 text-gray-400">Analyzing your exercise form...</p>
-              </div>
-            )}
+            </div>
+            <div className="space-y-6">
+              {(uploadStatus === 'idle' && previewUrl) && (
+                <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
+                  <h3 className="text-lg font-semibold mb-4">
+                    Video Preview
+                  </h3>
+                  <video
+                    src={previewUrl || ''}
+                    controls className="w-full rounded-lg" key={previewUrl}
+                  />
+                </div>
+              )}
+              {uploadStatus === 'uploading' && (
+                <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-200">Uploading...</span>
+                      <span className="text-sm text-gray-400">{uploadProgress}%</span>
+                    </div>
+                    <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                      <div
+                        className="h-2 bg-blue-500 rounded-full transition-all duration-300"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+              {uploadStatus === 'processing' && (
+                <div className="bg-gray-800 rounded-xl p-6 shadow-lg flex flex-col items-center justify-center text-center h-40">
+                  <Oval
+                    height={40} width={40} color="#60A5FA" visible={true}
+                    ariaLabel="oval-loading" secondaryColor="#374151" strokeWidth={4} strokeWidthSecondary={4}
+                  />
+                  <p className="mt-4 text-gray-400">Analyzing your exercise form...</p>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 };

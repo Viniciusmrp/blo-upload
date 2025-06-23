@@ -39,16 +39,16 @@ interface ExerciseAnalysisProps {
 }
 
 // Enhanced Score Card Component with professional styling
-const ScoreCard = ({ 
-  icon: Icon, 
-  title, 
-  score, 
-  unit, 
-  secondaryValue, 
-  secondaryUnit, 
+const ScoreCard = ({
+  icon: Icon,
+  title,
+  score,
+  unit,
+  secondaryValue,
+  secondaryUnit,
   colorClass,
   gradientFrom,
-  gradientTo 
+  gradientTo
 }: {
   icon: React.ElementType;
   title: string;
@@ -61,12 +61,12 @@ const ScoreCard = ({
   gradientTo: string;
 }) => {
   const percentage = Math.min((score / 100) * 100, 100);
-  
+
   return (
     <div className="group relative bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50 hover:border-gray-600/50 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
       {/* Subtle gradient overlay */}
       <div className={`absolute inset-0 bg-gradient-to-br ${gradientFrom} ${gradientTo} opacity-5 rounded-xl`}></div>
-      
+
       <div className="relative z-10">
         <div className="flex items-start justify-between mb-4">
           <div className={`p-3 rounded-lg bg-gradient-to-br ${gradientFrom} ${gradientTo} bg-opacity-20`}>
@@ -84,7 +84,7 @@ const ScoreCard = ({
             )}
           </div>
         </div>
-        
+
         <div className="space-y-3">
           <div className="flex justify-between items-center">
             <p className="text-sm font-medium text-gray-300">{title}</p>
@@ -92,10 +92,10 @@ const ScoreCard = ({
               {percentage.toFixed(0)}%
             </p>
           </div>
-          
+
           {/* Enhanced progress bar with glow effect */}
           <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
-            <div 
+            <div
               className={`h-2 rounded-full transition-all duration-700 ease-out bg-gradient-to-r ${gradientFrom} ${gradientTo} relative`}
               style={{ width: `${percentage}%` }}
             >
@@ -111,7 +111,7 @@ const ScoreCard = ({
 // Keep your existing processTensionData function unchanged
 const processTensionData = (tensionWindows: TensionWindow[], timeSeries: TimeSeriesDataPoint[]) => {
   if (!tensionWindows || tensionWindows.length === 0 || !timeSeries || timeSeries.length === 0) return [];
-  
+
   const plotData: { time: number; tension: number }[] = [];
   const totalDuration = timeSeries[timeSeries.length - 1].time;
 
@@ -161,52 +161,52 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
         <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto rounded-full"></div>
       </div>
 
-      {/* Enhanced Score Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <ScoreCard 
-          icon={Award} 
-          title="Overall Score" 
-          score={metrics.total_score} 
-          unit="/100" 
+      {/* MODIFIED: Adjusted grid columns for better spacing on different screen sizes */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <ScoreCard
+          icon={Award}
+          title="Overall Score"
+          score={metrics.total_score}
+          unit="/100"
           colorClass="text-blue-400"
           gradientFrom="from-blue-500"
           gradientTo="to-blue-600"
         />
-        <ScoreCard 
-          icon={Zap} 
-          title="Intensity Score" 
-          score={metrics.intensity_score} 
-          unit="/100" 
+        <ScoreCard
+          icon={Zap}
+          title="Intensity Score"
+          score={metrics.intensity_score}
+          unit="/100"
           colorClass="text-red-400"
           gradientFrom="from-red-500"
           gradientTo="to-red-600"
         />
-        <ScoreCard 
-          icon={Clock} 
-          title="TUT Score" 
-          score={metrics.tut_score} 
-          unit="/100" 
-          colorClass="text-yellow-400" 
-          secondaryValue={metrics.time_under_tension} 
+        <ScoreCard
+          icon={Clock}
+          title="TUT Score"
+          score={metrics.tut_score}
+          unit="/100"
+          colorClass="text-yellow-400"
+          secondaryValue={metrics.time_under_tension}
           secondaryUnit="s"
           gradientFrom="from-yellow-500"
           gradientTo="to-yellow-600"
         />
-        <ScoreCard 
-          icon={BarChart} 
-          title="Volume Score" 
-          score={metrics.volume_score} 
-          unit="/100" 
-          colorClass="text-green-400" 
-          secondaryValue={metrics.volume} 
+        <ScoreCard
+          icon={BarChart}
+          title="Volume Score"
+          score={metrics.volume_score}
+          unit="/100"
+          colorClass="text-green-400"
+          secondaryValue={metrics.volume}
           secondaryUnit={metrics.volume_unit}
           gradientFrom="from-green-500"
           gradientTo="to-green-600"
         />
       </div>
 
-      {/* Enhanced Summary Stats Row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* MODIFIED: Adjusted grid columns for better spacing */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50 text-center group hover:shadow-2xl transition-all duration-300">
           <div className="p-3 bg-purple-500/20 rounded-lg w-fit mx-auto mb-3 group-hover:bg-purple-500/30 transition-colors">
             <Activity className="h-8 w-8 text-purple-400" />
@@ -214,7 +214,7 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
           <p className="text-3xl font-bold text-white mb-1">{tension_windows.length}</p>
           <p className="text-sm text-gray-400">Total Repetitions</p>
         </div>
-        
+
         <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50 text-center group hover:shadow-2xl transition-all duration-300">
           <div className="p-3 bg-indigo-500/20 rounded-lg w-fit mx-auto mb-3 group-hover:bg-indigo-500/30 transition-colors">
             <Clock className="h-8 w-8 text-indigo-400" />
@@ -224,7 +224,7 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
           </p>
           <p className="text-sm text-gray-400">Avg Rep Duration</p>
         </div>
-        
+
         <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50 text-center group hover:shadow-2xl transition-all duration-300">
           <div className="p-3 bg-orange-500/20 rounded-lg w-fit mx-auto mb-3 group-hover:bg-orange-500/30 transition-colors">
             <Zap className="h-8 w-8 text-orange-400" />
@@ -254,36 +254,36 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
-                <XAxis 
-                  dataKey="time" 
-                  type="number" 
-                  stroke="#9CA3AF" 
-                  style={{ fontSize: '11px' }} 
-                  domain={['dataMin', 'dataMax']} 
-                  unit="s" 
+                <XAxis
+                  dataKey="time"
+                  type="number"
+                  stroke="#9CA3AF"
+                  style={{ fontSize: '11px' }}
+                  domain={['dataMin', 'dataMax']}
+                  unit="s"
                 />
-                <YAxis 
-                  stroke="#9CA3AF" 
-                  style={{ fontSize: '11px' }} 
-                  domain={[0, 1.2]} 
-                  allowDecimals={false} 
-                  ticks={[0, 1]} 
+                <YAxis
+                  stroke="#9CA3AF"
+                  style={{ fontSize: '11px' }}
+                  domain={[0, 1.2]}
+                  allowDecimals={false}
+                  ticks={[0, 1]}
                 />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#111827', 
-                    border: '1px solid #374151', 
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#111827',
+                    border: '1px solid #374151',
                     borderRadius: '12px',
                     color: '#F9FAFB',
                     boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
-                  }} 
+                  }}
                 />
-                <Area 
-                  type="stepAfter" 
-                  dataKey="tension" 
-                  stroke="#FBBF24" 
-                  fill="url(#tensionGradient)" 
-                  strokeWidth={3} 
+                <Area
+                  type="stepAfter"
+                  dataKey="tension"
+                  stroke="#FBBF24"
+                  fill="url(#tensionGradient)"
+                  strokeWidth={3}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -308,61 +308,61 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
-                <XAxis 
-                  dataKey="time" 
-                  type="number" 
-                  stroke="#9CA3AF" 
-                  style={{ fontSize: '11px' }} 
-                  domain={['dataMin', 'dataMax']} 
-                  unit="s" 
+                <XAxis
+                  dataKey="time"
+                  type="number"
+                  stroke="#9CA3AF"
+                  style={{ fontSize: '11px' }}
+                  domain={['dataMin', 'dataMax']}
+                  unit="s"
                 />
-                <YAxis 
-                  yAxisId="left" 
-                  stroke="#60A5FA" 
-                  style={{ fontSize: '11px' }} 
+                <YAxis
+                  yAxisId="left"
+                  stroke="#60A5FA"
+                  style={{ fontSize: '11px' }}
                 />
-                <YAxis 
-                  yAxisId="right" 
-                  orientation="right" 
-                  stroke="#34D399" 
-                  style={{ fontSize: '11px' }} 
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  stroke="#34D399"
+                  style={{ fontSize: '11px' }}
                 />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#111827', 
-                    border: '1px solid #374151', 
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#111827',
+                    border: '1px solid #374151',
                     borderRadius: '12px',
                     color: '#F9FAFB',
                     boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
-                  }} 
+                  }}
                 />
                 <Legend />
-                <Line 
-                  yAxisId="left" 
-                  type="monotone" 
-                  dataKey="angle" 
-                  stroke="url(#angleGradient)" 
-                  name="Angle" 
-                  dot={false} 
-                  strokeWidth={3} 
+                <Line
+                  yAxisId="left"
+                  type="monotone"
+                  dataKey="angle"
+                  stroke="url(#angleGradient)"
+                  name="Angle"
+                  dot={false}
+                  strokeWidth={3}
                 />
-                <Line 
-                  yAxisId="right" 
-                  type="monotone" 
-                  dataKey="hip_velocity" 
-                  stroke="#34D399" 
-                  name="Hip Velocity" 
-                  dot={false} 
-                  strokeWidth={2} 
+                <Line
+                  yAxisId="right"
+                  type="monotone"
+                  dataKey="hip_velocity"
+                  stroke="#34D399"
+                  name="Hip Velocity"
+                  dot={false}
+                  strokeWidth={2}
                 />
-                <Line 
-                  yAxisId="right" 
-                  type="monotone" 
-                  dataKey="hip_acceleration" 
-                  stroke="#F87171" 
-                  name="Hip Acceleration" 
-                  dot={false} 
-                  strokeWidth={2} 
+                <Line
+                  yAxisId="right"
+                  type="monotone"
+                  dataKey="hip_acceleration"
+                  stroke="#F87171"
+                  name="Hip Acceleration"
+                  dot={false}
+                  strokeWidth={2}
                 />
               </LineChart>
             </ResponsiveContainer>
