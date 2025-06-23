@@ -3,6 +3,8 @@ import AppLayout from '@/components/AppLayout';
 import ExerciseAnalysis from '@/components/ExerciseAnalysis';
 // If you want the Inter font here too, import it. Otherwise, see Step 3.
 
+export const dynamic = 'force-dynamic';
+
 // Mock data for ExerciseAnalysis - replace with your actual data or state later
 const mockAnalysisData = {
   status: 'success' as const,

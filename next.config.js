@@ -3,6 +3,7 @@ const nextConfig = {
   experimental: {
     appDir: true,
   },
+  // ADD THIS WEBPACK CONFIG
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {

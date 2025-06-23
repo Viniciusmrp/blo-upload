@@ -4,6 +4,7 @@ import NewUpload from '@/components/NewUpload'; // Your existing NewUpload compo
 // import { Inter } from 'next/font/google'; // Only if not applied globally in layout.tsx
 
 // const inter = Inter({ subsets: ['latin'] });
+export const dynamic = 'force-dynamic';
 
 export default function UploadPage() {
   return (
