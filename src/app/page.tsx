@@ -2,7 +2,7 @@
 import TopNavigationBar from '@/components/landing/TopNavigationBar';
 import HeroSection from '@/components/landing/HeroSection';
 import FeaturesSection from '@/components/landing/FeaturesSection';
-// Import other landing page sections as you create them
+import HowItWorksSection from '@/components/landing/HowItWorksSection'; // Import the new section
 import Footer from '@/components/landing/Footer';
 import { Inter } from 'next/font/google';
 
@@ -15,7 +15,7 @@ export default function LandingPage() {
       <main className="flex-grow">
         <HeroSection />
         <FeaturesSection />
-        {/* Add more sections here later */}
+        <HowItWorksSection /> {/* Add the new section here */}
       </main>
       <Footer />
     </div>

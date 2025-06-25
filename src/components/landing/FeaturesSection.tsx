@@ -1,30 +1,43 @@
 // src/components/landing/FeaturesSection.tsx
 import React from 'react';
-// import { Zap, BarChart2, ShieldCheck } from 'lucide-react'; // Example icons if you use them
+import { BarChart, Video, Zap, Clock, ShieldCheck, Target } from 'lucide-react';
 
 const FeaturesSection = () => {
-  // Placeholder for features
   const features = [
-    { title: "Feature One", description: "Description for feature one." /* icon: Zap */ },
-    { title: "Feature Two", description: "Description for feature two." /* icon: BarChart2 */ },
-    { title: "Feature Three", description: "Description for feature three." /* icon: ShieldCheck */ },
+    { 
+      title: "Instant AI Analysis", 
+      description: "Get immediate, automated feedback on your exercise form and technique right after you upload your video.",
+      icon: Video 
+    },
+    { 
+      title: "Advanced Performance Metrics", 
+      description: "Track key metrics like time under tension, intensity, volume, and an overall performance score for every set.",
+      icon: BarChart 
+    },
+    { 
+      title: "Intensity & TUT Scoring", 
+      description: "Optimize your training with specific scores for intensity and Time Under Tension (TUT) to ensure every rep counts.",
+      icon: Zap 
+    },
   ];
 
   return (
-    <section className="py-16 md:py-24 bg-slate-900">
+    <section id="features" className="py-20 md:py-24 bg-slate-800">
       <div className="container mx-auto px-6">
-        <h2 className="text-3xl md:text-4xl font-bold text-white text-center mb-4">
-          Our Features
-        </h2>
-        <p className="text-gray-400 text-center mb-12 md:mb-16 max-w-xl mx-auto">
-          Discover the core advantages our platform offers.
-        </p>
+        <div className="text-center max-w-2xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              Unlock Your True Potential
+            </h2>
+            <p className="text-gray-400 mb-12">
+              Argus provides a comprehensive breakdown of your performance with cutting-edge analysis tools.
+            </p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {features.map((feature, index) => (
-            <div key={index} className="bg-slate-800 p-6 rounded-xl shadow-lg">
-              {/* feature.icon && <feature.icon className="h-12 w-12 text-blue-500 mx-auto mb-4" /> */}
-              <h3 className="text-xl font-semibold text-white mb-2 text-center">{feature.title}</h3>
-              <p className="text-gray-400 text-center text-sm">{feature.description}</p>
+            <div key={index} className="bg-slate-900 p-8 rounded-xl shadow-lg border border-transparent hover:border-blue-500 transition-colors duration-300">
+              <feature.icon className="h-10 w-10 text-blue-500 mb-4" />
+              <h3 className="text-xl font-semibold text-white mb-2">{feature.title}</h3>
+              <p className="text-gray-400 text-sm">{feature.description}</p>
             </div>
           ))}
         </div>
