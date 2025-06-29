@@ -11,7 +11,6 @@ import {
 } from "react";
 import axios from "axios";
 import { Oval } from "react-loader-spinner";
-// MODIFIED: Added AlertCircle to the import line
 import { CheckCircle, Upload, RefreshCw, AlertCircle } from "lucide-react";
 import { generateVideoId } from "../utils/generateVideoId";
 
@@ -272,13 +271,8 @@ const NewUpload = () => {
 
   // Default view for uploading
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-4xl">
-        <header className="border-b border-gray-800 mb-8">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center">
-            <h1 className="text-2xl font-bold text-blue-400">Exercise Analysis</h1>
-          </div>
-        </header>
+    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-start p-4">
+      <div className="w-full max-w-4xl flex-grow flex items-center justify-center">
         <main>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="bg-gray-800 rounded-xl p-6 shadow-lg">

@@ -1,10 +1,11 @@
+// src/app/dashboard/layout.tsx (Modified)
 "use client";
 
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, UploadCloud, ListChecks, Settings } from 'lucide-react';
+import { Home, UploadCloud, ListChecks, Settings, User, LogOut } from 'lucide-react'; // Added User and LogOut icons
 import { useAuth } from '@/context/AuthContext';
 import LoginModal from '@/components/auth/LoginModal';
 import { Oval } from 'react-loader-spinner';
@@ -32,9 +33,8 @@ const NavItem: React.FC<NavItemProps> = ({ icon: Icon, label, href }) => {
   );
 };
 
-// This is our new layout component for the dashboard section
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { currentUser, loading } = useAuth();
+  const { currentUser, loading, logout } = useAuth(); // Added logout
 
   if (loading) {
     return (
@@ -72,12 +72,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div>
           <ul>
             <li><NavItem icon={Settings} label="Settings" href="/dashboard/settings" /></li>
+            {/* User Profile Section */}
+            <li className="border-t border-gray-700 mt-4 pt-4">
+              <div className="flex items-center space-x-3 px-4">
+                  <User className="h-8 w-8 text-gray-400 bg-gray-700 rounded-full p-1" />
+                  <div>
+                      <p className="text-sm font-medium text-white truncate">{currentUser.email}</p>
+                      <button onClick={logout} className="text-xs text-red-400 hover:text-red-500 flex items-center">
+                          <LogOut className="h-3 w-3 mr-1" />
+                          Sign Out
+                      </button>
+                  </div>
+              </div>
+            </li>
           </ul>
         </div>
       </aside>
       <div className="flex-1 flex flex-col overflow-hidden">
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-900 p-6 md:p-8 lg:p-10">
-          {children} {/* Page content will be rendered here */}
+          {children}
         </main>
       </div>
     </div>
