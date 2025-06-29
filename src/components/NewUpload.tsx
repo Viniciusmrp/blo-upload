@@ -271,16 +271,16 @@ const NewUpload = () => {
 
   // Default view for uploading
   return (
-    <div className="w-full h-full flex items-center justify-center">
-        <div className="w-full max-w-4xl">
+    <div className="w-full">
+        <div className="w-full max-w-6xl mx-auto">
             <header className="border-b border-gray-800 mb-8">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center">
+                <div className="py-6 text-center">
                     <h1 className="text-2xl font-bold text-blue-400">Exercise Analysis</h1>
                 </div>
             </header>
             <main>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
+                <div className="flex flex-wrap justify-center items-start gap-8">
+                    <div className="bg-gray-800 rounded-xl p-6 shadow-lg w-full max-w-lg">
                         <div className="space-y-6">
                         <div className="text-center">
                             <h2 className="text-xl font-semibold mb-2">Upload Your Exercise Video</h2>
@@ -360,7 +360,7 @@ const NewUpload = () => {
                         )}
                         </div>
                     </div>
-                    <div className="space-y-6">
+                    <div className="space-y-6 w-full max-w-lg">
                         {(uploadStatus === 'idle' && previewUrl) && (
                         <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
                             <h3 className="text-lg font-semibold mb-4">
