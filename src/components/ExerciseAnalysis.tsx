@@ -290,13 +290,13 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
           </div>
         </div>
 
-        {/* Enhanced Time Series Chart */}
+        {/* Angle Chart */}
         <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50">
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2 bg-blue-500/20 rounded-lg">
               <BarChart className="h-5 w-5 text-blue-400" />
             </div>
-            <h3 className="text-lg font-semibold text-white">Movement Analysis</h3>
+            <h3 className="text-lg font-semibold text-white">Angle Analysis</h3>
           </div>
           <div className="h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -321,12 +321,6 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
                   stroke="#60A5FA"
                   style={{ fontSize: '11px' }}
                 />
-                <YAxis
-                  yAxisId="right"
-                  orientation="right"
-                  stroke="#34D399"
-                  style={{ fontSize: '11px' }}
-                />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: '#111827',
@@ -346,6 +340,47 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
                   dot={false}
                   strokeWidth={3}
                 />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Hip Velocity Chart */}
+        <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 bg-green-500/20 rounded-lg">
+              <BarChart className="h-5 w-5 text-green-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-white">Hip Velocity Analysis</h3>
+          </div>
+          <div className="h-[280px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={time_series}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
+                <XAxis
+                  dataKey="time"
+                  type="number"
+                  stroke="#9CA3AF"
+                  style={{ fontSize: '11px' }}
+                  domain={['dataMin', 'dataMax']}
+                  unit="s"
+                />
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  stroke="#34D399"
+                  style={{ fontSize: '11px' }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#111827',
+                    border: '1px solid #374151',
+                    borderRadius: '12px',
+                    color: '#F9FAFB',
+                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+                  }}
+                />
+                <Legend />
                 <Line
                   yAxisId="right"
                   type="monotone"
@@ -355,6 +390,47 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
                   dot={false}
                   strokeWidth={2}
                 />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Hip Acceleration Chart */}
+        <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 bg-red-500/20 rounded-lg">
+              <BarChart className="h-5 w-5 text-red-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-white">Hip Acceleration Analysis</h3>
+          </div>
+          <div className="h-[280px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={time_series}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
+                <XAxis
+                  dataKey="time"
+                  type="number"
+                  stroke="#9CA3AF"
+                  style={{ fontSize: '11px' }}
+                  domain={['dataMin', 'dataMax']}
+                  unit="s"
+                />
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  stroke="#F87171"
+                  style={{ fontSize: '11px' }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#111827',
+                    border: '1px solid #374151',
+                    borderRadius: '12px',
+                    color: '#F9FAFB',
+                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+                  }}
+                />
+                <Legend />
                 <Line
                   yAxisId="right"
                   type="monotone"
