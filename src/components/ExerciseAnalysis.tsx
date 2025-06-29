@@ -12,6 +12,7 @@ interface Metrics {
   time_under_tension: number;
   volume: number;
   volume_unit: string;
+  completed_reps: number;
 }
 
 interface TensionWindow {
@@ -211,7 +212,7 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
           <div className="p-3 bg-purple-500/20 rounded-lg w-fit mx-auto mb-3 group-hover:bg-purple-500/30 transition-colors">
             <Activity className="h-8 w-8 text-purple-400" />
           </div>
-          <p className="text-3xl font-bold text-white mb-1">{tension_windows.length}</p>
+          <p className="text-3xl font-bold text-white mb-1">{metrics.completed_reps}</p>
           <p className="text-sm text-gray-400">Total Repetitions</p>
         </div>
 
@@ -220,7 +221,7 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
             <Clock className="h-8 w-8 text-indigo-400" />
           </div>
           <p className="text-3xl font-bold text-white mb-1">
-            {tension_windows.length > 0 ? (metrics.time_under_tension / tension_windows.length).toFixed(1) : '0.0'}s
+            {metrics.completed_reps > 0 ? (metrics.time_under_tension / metrics.completed_reps).toFixed(1) : '0.0'}s
           </p>
           <p className="text-sm text-gray-400">Avg Rep Duration</p>
         </div>

@@ -25,6 +25,7 @@ interface Metrics {
   volume_unit: string;
   avg_intensity?: number;
   max_intensity?: number;
+  completed_reps: number;
 }
 
 interface TensionWindow {
