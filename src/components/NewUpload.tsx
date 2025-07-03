@@ -25,7 +25,11 @@ interface Metrics {
   volume_unit: string;
   avg_intensity?: number;
   max_intensity?: number;
+}
+
+interface RepCounting {
   completed_reps: number;
+  // Add other properties from rep_details if needed
 }
 
 interface TensionWindow {
@@ -46,6 +50,7 @@ interface AnalysisData {
   tension_windows?: TensionWindow[];
   time_series?: TimeSeriesDataPoint[];
   error?: string;
+  rep_counting?: RepCounting;
 }
 
 const NewUpload = () => {

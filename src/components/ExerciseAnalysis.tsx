@@ -12,7 +12,11 @@ interface Metrics {
   time_under_tension: number;
   volume: number;
   volume_unit: string;
-  completed_reps: number; // Add this line
+}
+
+interface RepCounting {
+  completed_reps: number;
+  // Add other properties from rep_details if needed
 }
 
 interface TensionWindow {
@@ -33,6 +37,7 @@ interface AnalysisData {
   tension_windows?: TensionWindow[];
   time_series?: TimeSeriesDataPoint[];
   error?: string;
+  rep_counting?: RepCounting;
 }
 
 interface ExerciseAnalysisProps {
@@ -130,7 +135,7 @@ const processTensionData = (tensionWindows: TensionWindow[], timeSeries: TimeSer
 };
 
 const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => {
-  if (analysisData.status !== 'success' || !analysisData.metrics) {
+  if (analysisData.status !== 'success' || !analysisData.metrics || !analysisData.rep_counting) {
     return (
       <div className="bg-gradient-to-br from-red-900/20 to-red-800/20 rounded-xl p-6 shadow-lg border border-red-500/30 backdrop-blur-sm">
         <div className="text-red-400 flex items-center gap-3">
@@ -212,7 +217,7 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
           <div className="p-3 bg-purple-500/20 rounded-lg w-fit mx-auto mb-3 group-hover:bg-purple-500/30 transition-colors">
             <Activity className="h-8 w-8 text-purple-400" />
           </div>
-          <p className="text-3xl font-bold text-white mb-1">{metrics.completed_reps}</p>
+          <p className="text-3xl font-bold text-white mb-1">{analysisData.rep_counting.completed_reps}</p>
           <p className="text-sm text-gray-400">Total Repetitions</p>
         </div>
 
