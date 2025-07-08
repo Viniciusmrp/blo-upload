@@ -1,19 +1,20 @@
-"use client";
-
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { 
-  getAuth, 
-  onAuthStateChanged, 
-  User, 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  signOut, 
-  Auth, 
-  UserCredential 
+'use client';
+import { createContext, useContext, useEffect, useState } from 'react';
+import {
+  getAuth,
+  onAuthStateChanged,
+  User,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  // ---- ADD THESE TWO ----
+  GoogleAuthProvider,
+  signInWithPopup,
 } from 'firebase/auth';
-import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
+// ---- ADD THESE TWO ----
+import { initializeApp, getApps } from 'firebase/app';
 
-// Use environment variables for Firebase config
+// Your Firebase config is already here, which is great.
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -23,54 +24,62 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase
-const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const auth: Auth = getAuth(app);
+// Your app initialization is also here. Perfect.
+let firebase_app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+const auth = getAuth(firebase_app);
 
-interface AuthContextType {
-  currentUser: User | null;
-  loading: boolean;
-  login: (email: string, password: string) => Promise<UserCredential>;
-  signup: (email: string, password: string) => Promise<UserCredential>;
-  logout: () => Promise<void>;
-}
+// Update the context type to include the new function
+export const AuthContext = createContext<{
+  user: User | null;
+  signIn: (email: string, pass: string) => Promise<any>;
+  signUp: (email: string, pass: string) => Promise<any>;
+  logOut: () => Promise<any>;
+  signInWithGoogle: () => Promise<any>; // ---- ADD THIS ----
+}>({
+  user: null,
+  signIn: () => Promise.resolve(),
+  signUp: () => Promise.resolve(),
+  logOut: () => Promise.resolve(),
+  signInWithGoogle: () => Promise.resolve(), // ---- ADD THIS ----
+});
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const useAuthContext = () => useContext(AuthContext);
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+export const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const signIn = (email: string, pass: string) => {
+    return signInWithEmailAndPassword(auth, email, pass);
+  };
+
+  const signUp = (email: string, pass: string) => {
+    return createUserWithEmailAndPassword(auth, email, pass);
+  };
+
+  const logOut = () => {
+    return signOut(auth);
+  };
+
+  // ---- DEFINE THE GOOGLE SIGN-IN FUNCTION ----
+  const signInWithGoogle = () => {
+    const provider = new GoogleAuthProvider();
+    return signInWithPopup(auth, provider);
+  };
+
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
+      setUser(user || null);
       setLoading(false);
     });
-
-    return unsubscribe; // Cleanup subscription on unmount
+    return () => unsubscribe();
   }, []);
 
-  const value: AuthContextType = {
-    currentUser,
-    loading,
-    login: (email, password) => signInWithEmailAndPassword(auth, email, password),
-    signup: (email, password) => createUserWithEmailAndPassword(auth, email, password),
-    logout: () => signOut(auth),
-  };
-
-  // FIXED: Always render the provider. Never conditionally render it.
-  // The consuming components will use the `loading` value to decide what to show.
   return (
-    <AuthContext.Provider value={value}>
-      {children}
+    // ---- ADD signInWithGoogle to the provider value ----
+    <AuthContext.Provider value={{ user, signIn, signUp, logOut, signInWithGoogle }}>
+      {loading ? <div>Loading...</div> : children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
 };
