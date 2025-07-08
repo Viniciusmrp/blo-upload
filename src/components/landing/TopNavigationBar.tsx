@@ -1,33 +1,43 @@
-'use client';
+// src/components/landing/TopNavigationBar.tsx (Modified)
+"use client"; // Add this line
 
+import React from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
-import { useAuthContext } from '@/context/AuthContext'; // ---- ADD THIS IMPORT ----
+import { useAuth } from '@/context/AuthContext'; // Import useAuth
+import { User } from 'lucide-react'; // Import User icon
 
 const TopNavigationBar = () => {
-  const { user, logOut } = useAuthContext(); // ---- USE THE CONTEXT ----
+  const { currentUser } = useAuth(); // Get the current user
+  const logoSrc = "/logo-white.svg";
 
   return (
-    <header className="bg-gray-800 shadow-lg sticky top-0 z-50">
+    <header className="bg-slate-800/50 backdrop-blur-md shadow-sm sticky top-0 z-50">
       <nav className="container mx-auto px-6 py-3 flex justify-between items-center">
-        <Link href="/" className="text-xl font-bold text-white">
-          Your App
-        </Link>
-        <div className="flex items-center">
-          {user ? (
-            // ---- IF LOGGED IN, SHOW THIS ----
-            <div className="flex items-center space-x-4">
-              <span className="text-gray-300 hidden sm:block">{user.email}</span>
-              <button
-                onClick={logOut}
-                className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition"
-              >
-                Logout
-              </button>
-            </div>
+        <div>
+          <Link href="/">
+            <Image
+              src={logoSrc}
+              alt="Argus Logo"
+              width={150}
+              height={50}
+              priority
+            />
+          </Link>
+        </div>
+        <div className="space-x-6 hidden md:flex items-center">
+          <Link href="/#features" className="text-gray-300 hover:text-white">Features</Link>
+          <Link href="/#about" className="text-gray-300 hover:text-white">About</Link>
+        </div>
+        <div>
+          {currentUser ? (
+            <Link href="/dashboard" className="flex items-center space-x-2 text-white font-semibold py-2 px-4 rounded-lg transition duration-150 ease-in-out bg-gray-700 hover:bg-gray-600">
+                <User className="h-5 w-5" />
+                <span>Dashboard</span>
+            </Link>
           ) : (
-            // ---- IF LOGGED OUT, SHOW THIS ----
-            <Link href="/login" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition">
-                Login
+            <Link href="/dashboard" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-150 ease-in-out">
+              Try Now
             </Link>
           )}
         </div>
@@ -35,5 +45,4 @@ const TopNavigationBar = () => {
     </header>
   );
 };
-
 export default TopNavigationBar;

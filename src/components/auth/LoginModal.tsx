@@ -1,75 +1,94 @@
-'use client';
-import { useState } from 'react';
-import { useAuthContext } from '@/context/AuthContext';
+"use client";
+
+import React, { useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { FirebaseError } from 'firebase/app';
+import { Oval } from 'react-loader-spinner';
 
 const LoginModal = () => {
+  const [isLoginView, setIsLoginView] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { signIn, signInWithGoogle } = useAuthContext(); // Get the new function
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { login, signup } = useAuth();
 
-  const handleSignIn = async (event: React.FormEvent) => {
-    event.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setError('');
-    try {
-      await signIn(email, password);
-    } catch (e) {
-      setError('Invalid credentials. Please try again.');
-      console.error(e);
-    }
-  };
+    setLoading(true);
 
-  const handleGoogleSignIn = async () => {
-    setError('');
     try {
-      await signInWithGoogle();
-    } catch (e: any) {
-      if (e.code !== 'auth/popup-closed-by-user') {
-        setError('Could not sign in with Google.');
+      if (isLoginView) {
+        await login(email, password);
+      } else {
+        await signup(email, password);
       }
-      console.error(e);
+      // On successful login/signup, the onAuthStateChanged in AuthContext will handle the rest.
+    } catch (err) {
+      if (err instanceof FirebaseError) {
+        setError(err.message.replace('Firebase: ', ''));
+      } else {
+        setError('An unexpected error occurred. Please try again.');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex justify-center items-center z-50">
-      <div className="bg-gray-800 p-8 rounded-lg shadow-xl text-white w-full max-w-sm">
-        <h2 className="text-2xl font-bold mb-6 text-center">Sign In</h2>
-        {error && <p className="text-red-400 text-center mb-4">{error}</p>}
-        <form onSubmit={handleSignIn} className="space-y-4">
-          <input
-            type="email"
-            placeholder="Email"
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-2 border rounded-lg bg-gray-700 text-white border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-4 py-2 border rounded-lg bg-gray-700 text-white border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-          <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg transition">
-            Login
+    <div className="fixed inset-0 bg-slate-900 bg-opacity-80 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl p-8 w-full max-w-md">
+        <h2 className="text-2xl font-bold text-white text-center mb-2">
+          {isLoginView ? 'Welcome Back' : 'Create an Account'}
+        </h2>
+        <p className="text-center text-gray-400 mb-6">
+          {isLoginView ? 'Sign in to access your dashboard.' : 'Sign up to start analyzing your exercises.'}
+        </p>
+        
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-2">
+            <label htmlFor="email" className="text-sm font-medium text-gray-300">Email</label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full bg-gray-700 text-white rounded-lg border border-gray-600 p-3 focus:ring-2 focus:ring-blue-500 transition"
+              placeholder="you@example.com"
+            />
+          </div>
+          <div className="space-y-2">
+            <label htmlFor="password"className="text-sm font-medium text-gray-300">Password</label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full bg-gray-700 text-white rounded-lg border border-gray-600 p-3 focus:ring-2 focus:ring-blue-500 transition"
+              placeholder="••••••••"
+            />
+          </div>
+          
+          {error && <p className="text-red-400 text-sm text-center">{error}</p>}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full flex items-center justify-center bg-blue-600 hover:bg-blue-700 disabled:bg-gray-500 text-white font-semibold py-3 px-4 rounded-lg transition h-12"
+          >
+            {loading ? <Oval height={24} width={24} color="white" secondaryColor='gray' /> : (isLoginView ? 'Log In' : 'Sign Up')}
           </button>
         </form>
 
-        <div className="my-4 flex items-center">
-          <hr className="w-full border-gray-600" />
-          <span className="px-2 text-gray-400 text-sm">OR</span>
-          <hr className="w-full border-gray-600" />
-        </div>
-
-        {/* ---- THIS IS THE NEW BUTTON ---- */}
-        <button
-          onClick={handleGoogleSignIn}
-          className="w-full bg-white text-gray-800 font-semibold py-2 px-4 rounded-lg border border-gray-300 hover:bg-gray-100 transition flex items-center justify-center gap-2"
-        >
-          {/* You can find an SVG for the Google logo online to place here */}
-          Sign in with Google
-        </button>
+        <p className="text-center text-sm text-gray-400 mt-6">
+          {isLoginView ? "Don't have an account?" : 'Already have an account?'}
+          <button onClick={() => { setIsLoginView(!isLoginView); setError(''); }} className="font-semibold text-blue-400 hover:text-blue-500 ml-2">
+            {isLoginView ? 'Sign Up' : 'Log In'}
+          </button>
+        </p>
       </div>
     </div>
   );
