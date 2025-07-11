@@ -1,30 +1,35 @@
 // src/app/layout.tsx
-"use client";
-
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import { Inter } from 'next/font/google';
+import type { Metadata } from 'next'; // Import the Metadata type
 
-// This initializes the Inter font for your application.
 const inter = Inter({ subsets: ['latin'] });
+
+// Define your metadata object
+export const metadata: Metadata = {
+  title: 'Argus.fit', // This will be the default title for your tabs
+  description: 'AI-Powered Feedback For Every Rep',
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon.svg', type: 'image/svg+xml' }, // If you have an SVG icon
+    ],
+    apple: '/apple-touch-icon.png',
+  },
+  manifest: '/site.webmanifest',
+};
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <html lang="en">
-      <head>
-        {/* All the icon link tags can be removed from here */}
-      </head>
-      {/* The AuthProvider is wrapped around the children, making the auth state 
-        globally available to any client component in your application.
-      */}
+      {/* Next.js will automatically add the <head> contents from your metadata */}
       <body className={inter.className}>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );
