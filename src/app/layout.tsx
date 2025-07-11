@@ -15,6 +15,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" href="/logo.svg" type="image/svg+xml" />
+      </head>
       {/* The AuthProvider is wrapped around the children, making the auth state 
         globally available to any client component in your application.
       */}
