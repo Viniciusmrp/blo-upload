@@ -252,7 +252,7 @@ const NewUpload = () => {
               <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
                 <div className="text-red-400 flex items-center gap-2">
                   <AlertCircle className="h-5 w-5" />
-                  <p>Analysis Error: {analysisData.error || 'Failed to load analysis results'}</p>
+                  <p>Analysis Error: {analysisData.error || 'Failed to load the analysis results'}</p>
                 </div>
               </div>
             )}
