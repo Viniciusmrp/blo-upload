@@ -1,7 +1,7 @@
 "use client";
-import React from 'react';
+import React, { useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { Award, Zap, Clock, BarChart, AlertCircle, Activity } from 'lucide-react';
+import { Award, Zap, Clock, BarChart, AlertCircle, Activity, ChevronDown, ChevronUp } from 'lucide-react';
 
 // Keep your existing interfaces unchanged
 interface Metrics {
@@ -16,7 +16,6 @@ interface Metrics {
 
 interface RepCounting {
   completed_reps: number;
-  // Add other properties from rep_details if needed
 }
 
 interface TensionWindow {
@@ -26,9 +25,22 @@ interface TensionWindow {
 
 interface TimeSeriesDataPoint {
   time: number;
-  angle: number;
+  left_knee_angle: number;
+  right_knee_angle: number;
+  left_hip_angle: number;
+  right_hip_angle: number;
+  left_ankle_angle: number;
+  right_ankle_angle: number;
+  left_shoulder_angle: number;
+  right_shoulder_angle: number;
+  left_elbow_angle: number;
+  right_elbow_angle: number;
+  left_wrist_angle: number;
+  right_wrist_angle: number;
   hip_velocity: number;
   hip_acceleration: number;
+  is_concentric: boolean;
+  phase_intensity: number;
 }
 
 interface AnalysisData {
@@ -70,9 +82,7 @@ const ScoreCard = ({
 
   return (
     <div className="group relative bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50 hover:border-gray-600/50 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
-      {/* Subtle gradient overlay */}
       <div className={`absolute inset-0 bg-gradient-to-br ${gradientFrom} ${gradientTo} opacity-5 rounded-xl`}></div>
-
       <div className="relative z-10">
         <div className="flex items-start justify-between mb-4">
           <div className={`p-3 rounded-lg bg-gradient-to-br ${gradientFrom} ${gradientTo} bg-opacity-20`}>
@@ -90,7 +100,6 @@ const ScoreCard = ({
             )}
           </div>
         </div>
-
         <div className="space-y-3">
           <div className="flex justify-between items-center">
             <p className="text-sm font-medium text-gray-300">{title}</p>
@@ -98,8 +107,6 @@ const ScoreCard = ({
               {percentage.toFixed(0)}%
             </p>
           </div>
-
-          {/* Enhanced progress bar with glow effect */}
           <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
             <div
               className={`h-2 rounded-full transition-all duration-700 ease-out bg-gradient-to-r ${gradientFrom} ${gradientTo} relative`}
@@ -114,7 +121,6 @@ const ScoreCard = ({
   );
 };
 
-// Keep your existing processTensionData function unchanged
 const processTensionData = (tensionWindows: TensionWindow[], timeSeries: TimeSeriesDataPoint[]) => {
   if (!tensionWindows || tensionWindows.length === 0 || !timeSeries || timeSeries.length === 0) return [];
 
@@ -134,7 +140,113 @@ const processTensionData = (tensionWindows: TensionWindow[], timeSeries: TimeSer
   return plotData.sort((a, b) => a.time - b.time);
 };
 
+// FIXED: Added explicit types for the component's props
+interface AngleChartProps {
+    title: string;
+    data: TimeSeriesDataPoint[];
+    dataKey: keyof TimeSeriesDataPoint;
+    color: string;
+    unit: string;
+}
+  
+const AngleChart: React.FC<AngleChartProps> = ({ title, data, dataKey, color, unit }) => (
+    <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50">
+      <div className="flex items-center gap-3 mb-6">
+        <div className={`p-2 bg-gray-700 rounded-lg`}>
+          <Activity className={`h-5 w-5`} style={{ color }} />
+        </div>
+        <h3 className="text-lg font-semibold text-white">{title}</h3>
+      </div>
+      <div className="h-[280px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
+            <XAxis
+              dataKey="time"
+              type="number"
+              stroke="#9CA3AF"
+              style={{ fontSize: '11px' }}
+              domain={['dataMin', 'dataMax']}
+              unit="s"
+            />
+            <YAxis
+              stroke={color}
+              style={{ fontSize: '11px' }}
+              unit={unit}
+            />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: '#111827',
+                border: '1px solid #374151',
+                borderRadius: '12px',
+                color: '#F9FAFB',
+                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+              }}
+            />
+            <Legend />
+            <Line
+              type="monotone"
+              dataKey={dataKey}
+              stroke={color}
+              name={title}
+              dot={false}
+              strokeWidth={2}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+);
+
+// FIXED: Define a type for the angle keys to ensure type safety
+type AngleKey = keyof Omit<TimeSeriesDataPoint, 'time' | 'hip_velocity' | 'hip_acceleration' | 'is_concentric' | 'phase_intensity'>;
+
+
 const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => {
+    // FIXED: Use the AngleKey type for state
+    const [visibleAngles, setVisibleAngles] = useState<Record<AngleKey, boolean>>({
+        left_knee_angle: true,
+        right_knee_angle: true,
+        left_hip_angle: true,
+        right_hip_angle: true,
+        left_ankle_angle: false,
+        right_ankle_angle: false,
+        left_shoulder_angle: false,
+        right_shoulder_angle: false,
+        left_elbow_angle: false,
+        right_elbow_angle: false,
+        left_wrist_angle: false,
+        right_wrist_angle: false,
+    });
+    
+      const [showCheckboxes, setShowCheckboxes] = useState(true);
+    
+      // FIXED: Use the AngleKey type for the config object
+      const angleConfig: Record<AngleKey, { name: string; color: string }> = {
+        left_knee_angle: { name: "Left Knee", color: "#34D399" },
+        right_knee_angle: { name: "Right Knee", color: "#3B82F6" },
+        left_hip_angle: { name: "Left Hip", color: "#FBBF24" },
+        right_hip_angle: { name: "Right Hip", color: "#F87171" },
+        left_ankle_angle: { name: "Left Ankle", color: "#A78BFA" },
+        right_ankle_angle: { name: "Right Ankle", color: "#F472B6" },
+        left_shoulder_angle: { name: "Left Shoulder", color: "#60A5FA" },
+        right_shoulder_angle: { name: "Right Shoulder", color: "#818CF8" },
+        left_elbow_angle: { name: "Left Elbow", color: "#FDBA74" },
+        right_elbow_angle: { name: "Right Elbow", color: "#FBCFE8" },
+        left_wrist_angle: { name: "Left Wrist", color: "#A5B4FC" },
+        right_wrist_angle: { name: "Right Wrist", color: "#D8B4FE" },
+      };
+      
+    
+      const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, checked } = event.target;
+        // FIXED: Ensure the name is a valid AngleKey before setting state
+        setVisibleAngles(prevState => ({
+          ...prevState,
+          [name as AngleKey]: checked,
+        }));
+      };
+
   if (analysisData.status !== 'success' || !analysisData.metrics || !analysisData.rep_counting) {
     return (
       <div className="bg-gradient-to-br from-red-900/20 to-red-800/20 rounded-xl p-6 shadow-lg border border-red-500/30 backdrop-blur-sm">
@@ -154,6 +266,9 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
   const { metrics, tension_windows = [], time_series = [] } = analysisData;
   const tensionPlotData = processTensionData(tension_windows, time_series);
 
+  // FIXED: Explicitly cast the keys to AngleKey[] to satisfy TypeScript
+  const angleKeys = Object.keys(angleConfig) as AngleKey[];
+
   return (
     <div className="space-y-8">
       {/* Enhanced Header with gradient text */}
@@ -166,8 +281,6 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
         </p>
         <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto rounded-full"></div>
       </div>
-
-      {/* MODIFIED: Adjusted grid columns for better spacing on different screen sizes */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <ScoreCard
           icon={Award}
@@ -211,7 +324,6 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
         />
       </div>
 
-      {/* MODIFIED: Adjusted grid columns for better spacing */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50 text-center group hover:shadow-2xl transition-all duration-300">
           <div className="p-3 bg-purple-500/20 rounded-lg w-fit mx-auto mb-3 group-hover:bg-purple-500/30 transition-colors">
@@ -239,10 +351,73 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
           <p className="text-sm text-gray-400">Time Efficiency</p>
         </div>
       </div>
+       <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-white">Combined Angle Analysis</h3>
+          <button onClick={() => setShowCheckboxes(!showCheckboxes)} className="text-gray-400 hover:text-white">
+            {showCheckboxes ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          </button>
+        </div>
 
-      {/* Enhanced Charts Section */}
+        {showCheckboxes && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-4 gap-y-2 mb-6">
+            {angleKeys.map((key) => (
+              <label key={key} className="flex items-center space-x-2 text-sm text-gray-300 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name={key}
+                  checked={visibleAngles[key]}
+                  onChange={handleCheckboxChange}
+                  className="form-checkbox h-4 w-4 rounded"
+                  style={{ accentColor: angleConfig[key].color }}
+                />
+                <span style={{ color: angleConfig[key].color }}>{angleConfig[key].name}</span>
+              </label>
+            ))}
+          </div>
+        )}
+
+        <div className="h-[400px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={time_series}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
+              <XAxis
+                dataKey="time"
+                type="number"
+                stroke="#9CA3AF"
+                style={{ fontSize: '11px' }}
+                domain={['dataMin', 'dataMax']}
+                unit="s"
+              />
+              <YAxis stroke="#9CA3AF" style={{ fontSize: '11px' }} unit="°" />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#111827',
+                  border: '1px solid #374151',
+                  borderRadius: '12px',
+                  color: '#F9FAFB',
+                }}
+              />
+              <Legend />
+              {angleKeys.map((key) => 
+                visibleAngles[key] && (
+                  <Line
+                    key={key}
+                    type="monotone"
+                    dataKey={key}
+                    stroke={angleConfig[key].color}
+                    name={angleConfig[key].name}
+                    dot={false}
+                    strokeWidth={2}
+                  />
+                )
+              )}
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+      
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-        {/* Enhanced Tension Windows Chart */}
         <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50">
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2 bg-yellow-500/20 rounded-lg">
@@ -296,62 +471,17 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
           </div>
         </div>
 
-        {/* Angle Chart */}
-        <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-blue-500/20 rounded-lg">
-              <BarChart className="h-5 w-5 text-blue-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-white">Angle Analysis</h3>
-          </div>
-          <div className="h-[280px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={time_series}>
-                <defs>
-                  <linearGradient id="angleGradient" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#60A5FA"/>
-                    <stop offset="100%" stopColor="#3B82F6"/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
-                <XAxis
-                  dataKey="time"
-                  type="number"
-                  stroke="#9CA3AF"
-                  style={{ fontSize: '11px' }}
-                  domain={['dataMin', 'dataMax']}
-                  unit="s"
-                />
-                <YAxis
-                  yAxisId="left"
-                  stroke="#60A5FA"
-                  style={{ fontSize: '11px' }}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#111827',
-                    border: '1px solid #374151',
-                    borderRadius: '12px',
-                    color: '#F9FAFB',
-                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
-                  }}
-                />
-                <Legend />
-                <Line
-                  yAxisId="left"
-                  type="monotone"
-                  dataKey="angle"
-                  stroke="url(#angleGradient)"
-                  name="Angle"
-                  dot={false}
-                  strokeWidth={3}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        {angleKeys.map((key) => (
+            <AngleChart
+                key={key}
+                title={`${angleConfig[key].name} Angle`}
+                data={time_series}
+                dataKey={key}
+                color={angleConfig[key].color}
+                unit="°"
+            />
+        ))}
 
-        {/* Hip Velocity Chart */}
         <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50">
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2 bg-green-500/20 rounded-lg">
@@ -400,8 +530,6 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
             </ResponsiveContainer>
           </div>
         </div>
-
-        {/* Hip Acceleration Chart */}
         <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50">
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2 bg-red-500/20 rounded-lg">

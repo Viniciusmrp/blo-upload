@@ -39,9 +39,22 @@ interface TensionWindow {
 
 interface TimeSeriesDataPoint {
   time: number;
-  angle: number;
+  left_knee_angle: number;
+  right_knee_angle: number;
+  left_hip_angle: number;
+  right_hip_angle: number;
+  left_ankle_angle: number;
+  right_ankle_angle: number;
+  left_shoulder_angle: number;
+  right_shoulder_angle: number;
+  left_elbow_angle: number;
+  right_elbow_angle: number;
+  left_wrist_angle: number;
+  right_wrist_angle: number;
   hip_velocity: number;
   hip_acceleration: number;
+  is_concentric: boolean;
+  phase_intensity: number;
 }
 
 interface AnalysisData {
