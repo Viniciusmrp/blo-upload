@@ -41,6 +41,12 @@ interface TimeSeriesDataPoint {
   hip_acceleration: number;
   is_concentric: boolean;
   phase_intensity: number;
+  avg_knee_angle: number;
+  avg_hip_angle: number;
+  avg_ankle_angle: number;
+  avg_shoulder_angle: number;
+  avg_elbow_angle: number;
+  avg_wrist_angle: number;
 }
 
 interface AnalysisData {
@@ -148,7 +154,7 @@ interface AngleChartProps {
     color: string;
     unit: string;
 }
-  
+
 const AngleChart: React.FC<AngleChartProps> = ({ title, data, dataKey, color, unit }) => (
     <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50">
       <div className="flex items-center gap-3 mb-6">
@@ -199,7 +205,7 @@ const AngleChart: React.FC<AngleChartProps> = ({ title, data, dataKey, color, un
 );
 
 // FIXED: Define a type for the angle keys to ensure type safety
-type AngleKey = keyof Omit<TimeSeriesDataPoint, 'time' | 'hip_velocity' | 'hip_acceleration' | 'is_concentric' | 'phase_intensity'>;
+type AngleKey = 'left_knee_angle' | 'right_knee_angle' | 'left_hip_angle' | 'right_hip_angle' | 'left_ankle_angle' | 'right_ankle_angle' | 'left_shoulder_angle' | 'right_shoulder_angle' | 'left_elbow_angle' | 'right_elbow_angle' | 'left_wrist_angle' | 'right_wrist_angle';
 
 
 const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => {
@@ -218,9 +224,9 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
         left_wrist_angle: false,
         right_wrist_angle: false,
     });
-    
+
       const [showCheckboxes, setShowCheckboxes] = useState(true);
-    
+
       // FIXED: Use the AngleKey type for the config object
       const angleConfig: Record<AngleKey, { name: string; color: string }> = {
         left_knee_angle: { name: "Left Knee", color: "#34D399" },
@@ -236,8 +242,18 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
         left_wrist_angle: { name: "Left Wrist", color: "#A5B4FC" },
         right_wrist_angle: { name: "Right Wrist", color: "#D8B4FE" },
       };
-      
-    
+
+      const avgAngleConfig = {
+        avg_knee_angle: { name: "Average Knee", color: "#4ade80" },
+        avg_hip_angle: { name: "Average Hip", color: "#facc15" },
+        avg_ankle_angle: { name: "Average Ankle", color: "#f87171" },
+        avg_shoulder_angle: { name: "Average Shoulder", color: "#60a5fa" },
+        avg_elbow_angle: { name: "Average Elbow", color: "#fb923c" },
+        avg_wrist_angle: { name: "Average Wrist", color: "#a78bfa" },
+      };
+
+      const avgAngleKeys = Object.keys(avgAngleConfig) as (keyof typeof avgAngleConfig)[];
+
       const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const { name, checked } = event.target;
         // FIXED: Ensure the name is a valid AngleKey before setting state
@@ -305,9 +321,9 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
           title="TUT Score"
           score={metrics.tut_score}
           unit="/100"
-          colorClass="text-yellow-400"
           secondaryValue={metrics.time_under_tension}
           secondaryUnit="s"
+          colorClass="text-yellow-400"
           gradientFrom="from-yellow-500"
           gradientTo="to-yellow-600"
         />
@@ -316,9 +332,9 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
           title="Volume Score"
           score={metrics.volume_score}
           unit="/100"
-          colorClass="text-green-400"
           secondaryValue={metrics.volume}
           secondaryUnit={metrics.volume_unit}
+          colorClass="text-green-400"
           gradientFrom="from-green-500"
           gradientTo="to-green-600"
         />
@@ -399,7 +415,7 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
                 }}
               />
               <Legend />
-              {angleKeys.map((key) => 
+              {angleKeys.map((key) =>
                 visibleAngles[key] && (
                   <Line
                     key={key}
@@ -416,7 +432,7 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
           </ResponsiveContainer>
         </div>
       </div>
-      
+
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
         <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50">
           <div className="flex items-center gap-3 mb-6">
@@ -470,14 +486,13 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
             </ResponsiveContainer>
           </div>
         </div>
-
-        {angleKeys.map((key) => (
+        {avgAngleKeys.map((key) => (
             <AngleChart
                 key={key}
-                title={`${angleConfig[key].name} Angle`}
+                title={`${avgAngleConfig[key].name} Angle`}
                 data={time_series}
                 dataKey={key}
-                color={angleConfig[key].color}
+                color={avgAngleConfig[key].color}
                 unit="°"
             />
         ))}

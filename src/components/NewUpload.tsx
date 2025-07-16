@@ -55,6 +55,12 @@ interface TimeSeriesDataPoint {
   hip_acceleration: number;
   is_concentric: boolean;
   phase_intensity: number;
+  avg_knee_angle: number;
+  avg_hip_angle: number;
+  avg_ankle_angle: number;
+  avg_shoulder_angle: number;
+  avg_elbow_angle: number;
+  avg_wrist_angle: number;
 }
 
 interface AnalysisData {
