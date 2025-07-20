@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { Award, Zap, Clock, BarChart, AlertCircle, Activity, ChevronDown, ChevronUp } from 'lucide-react';
 
@@ -24,29 +24,45 @@ interface TensionWindow {
 }
 
 interface TimeSeriesDataPoint {
-  time: number;
-  left_knee_angle: number;
-  right_knee_angle: number;
-  left_hip_angle: number;
-  right_hip_angle: number;
-  left_ankle_angle: number;
-  right_ankle_angle: number;
-  left_shoulder_angle: number;
-  right_shoulder_angle: number;
-  left_elbow_angle: number;
-  right_elbow_angle: number;
-  left_wrist_angle: number;
-  right_wrist_angle: number;
-  hip_velocity: number;
-  hip_acceleration: number;
-  is_concentric: boolean;
-  phase_intensity: number;
-  avg_knee_angle: number;
-  avg_hip_angle: number;
-  avg_ankle_angle: number;
-  avg_shoulder_angle: number;
-  avg_elbow_angle: number;
-  avg_wrist_angle: number;
+    time: number;
+    left_knee_angle: number;
+    right_knee_angle: number;
+    left_hip_angle: number;
+    right_hip_angle: number;
+    left_ankle_angle: number;
+    right_ankle_angle: number;
+    left_shoulder_angle: number;
+    right_shoulder_angle: number;
+    left_elbow_angle: number;
+    right_elbow_angle: number;
+    left_wrist_angle: number;
+    right_wrist_angle: number;
+    hip_velocity: number;
+    hip_acceleration: number;
+    is_concentric: boolean;
+    phase_intensity: number;
+    avg_knee_angle: number;
+    avg_hip_angle: number;
+    avg_ankle_angle: number;
+    avg_shoulder_angle: number;
+    avg_elbow_angle: number;
+    avg_wrist_angle: number;
+    left_shoulder_visibility: number;
+    right_shoulder_visibility: number;
+    left_elbow_visibility: number;
+    right_elbow_visibility: number;
+    left_wrist_visibility: number;
+    right_wrist_visibility: number;
+    left_hip_visibility: number;
+    right_hip_visibility: number;
+    left_knee_visibility: number;
+    right_knee_visibility: number;
+    left_ankle_visibility: number;
+    right_ankle_visibility: number;
+    left_heel_visibility: number;
+    right_heel_visibility: number;
+    left_foot_index_visibility: number;
+    right_foot_index_visibility: number;
 }
 
 interface AnalysisData {
@@ -149,8 +165,8 @@ const processTensionData = (tensionWindows: TensionWindow[], timeSeries: TimeSer
 // FIXED: Added explicit types for the component's props
 interface AngleChartProps {
     title: string;
-    data: TimeSeriesDataPoint[];
-    dataKey: keyof TimeSeriesDataPoint;
+    data: any[];
+    dataKey: string;
     color: string;
     unit: string;
 }
@@ -204,64 +220,89 @@ const AngleChart: React.FC<AngleChartProps> = ({ title, data, dataKey, color, un
     </div>
 );
 
-// FIXED: Define a type for the angle keys to ensure type safety
-type AngleKey = 'left_knee_angle' | 'right_knee_angle' | 'left_hip_angle' | 'right_hip_angle' | 'left_ankle_angle' | 'right_ankle_angle' | 'left_shoulder_angle' | 'right_shoulder_angle' | 'left_elbow_angle' | 'right_elbow_angle' | 'left_wrist_angle' | 'right_wrist_angle';
-
+// Define joint pairs for visibility analysis
+const jointPairs = {
+    shoulder: ['left_shoulder', 'right_shoulder'],
+    elbow: ['left_elbow', 'right_elbow'],
+    wrist: ['left_wrist', 'right_wrist'],
+    hip: ['left_hip', 'right_hip'],
+    knee: ['left_knee', 'right_knee'],
+    ankle: ['left_ankle', 'right_ankle'],
+};
 
 const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => {
-    // FIXED: Use the AngleKey type for state
-    const [visibleAngles, setVisibleAngles] = useState<Record<AngleKey, boolean>>({
-        left_knee_angle: true,
-        right_knee_angle: true,
-        left_hip_angle: true,
-        right_hip_angle: true,
-        left_ankle_angle: false,
-        right_ankle_angle: false,
-        left_shoulder_angle: false,
-        right_shoulder_angle: false,
-        left_elbow_angle: false,
-        right_elbow_angle: false,
-        left_wrist_angle: false,
-        right_wrist_angle: false,
+  const [showCheckboxes, setShowCheckboxes] = useState(true);
+
+  const { dominantJointData, dominantJoints } = useMemo(() => {
+    if (analysisData.status !== 'success' || !analysisData.time_series) {
+      return { dominantJointData: [], dominantJoints: {} };
+    }
+
+    const visibilityScores: { [key: string]: number[] } = {};
+    Object.values(jointPairs).flat().forEach(joint => {
+      visibilityScores[joint] = [];
     });
 
-      const [showCheckboxes, setShowCheckboxes] = useState(true);
+    analysisData.time_series.forEach(frame => {
+      Object.keys(visibilityScores).forEach(joint => {
+        const visibilityKey = `${joint}_visibility` as keyof TimeSeriesDataPoint;
+        if (typeof frame[visibilityKey] === 'number') {
+          visibilityScores[joint].push(frame[visibilityKey] as number);
+        }
+      });
+    });
 
-      // FIXED: Use the AngleKey type for the config object
-      const angleConfig: Record<AngleKey, { name: string; color: string }> = {
-        left_knee_angle: { name: "Left Knee", color: "#34D399" },
-        right_knee_angle: { name: "Right Knee", color: "#3B82F6" },
-        left_hip_angle: { name: "Left Hip", color: "#FBBF24" },
-        right_hip_angle: { name: "Right Hip", color: "#F87171" },
-        left_ankle_angle: { name: "Left Ankle", color: "#A78BFA" },
-        right_ankle_angle: { name: "Right Ankle", color: "#F472B6" },
-        left_shoulder_angle: { name: "Left Shoulder", color: "#60A5FA" },
-        right_shoulder_angle: { name: "Right Shoulder", color: "#818CF8" },
-        left_elbow_angle: { name: "Left Elbow", color: "#FDBA74" },
-        right_elbow_angle: { name: "Right Elbow", color: "#FBCFE8" },
-        left_wrist_angle: { name: "Left Wrist", color: "#A5B4FC" },
-        right_wrist_angle: { name: "Right Wrist", color: "#D8B4FE" },
-      };
+    const averageVisibility: { [key: string]: number } = {};
+    Object.keys(visibilityScores).forEach(joint => {
+      const scores = visibilityScores[joint];
+      averageVisibility[joint] = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+    });
 
-      const avgAngleConfig = {
-        avg_knee_angle: { name: "Average Knee", color: "#4ade80" },
-        avg_hip_angle: { name: "Average Hip", color: "#facc15" },
-        avg_ankle_angle: { name: "Average Ankle", color: "#f87171" },
-        avg_shoulder_angle: { name: "Average Shoulder", color: "#60a5fa" },
-        avg_elbow_angle: { name: "Average Elbow", color: "#fb923c" },
-        avg_wrist_angle: { name: "Average Wrist", color: "#a78bfa" },
-      };
+    const dominantJoints: { [key: string]: string } = {};
+    Object.keys(jointPairs).forEach(pairName => {
+      const [jointA, jointB] = jointPairs[pairName as keyof typeof jointPairs];
+      dominantJoints[pairName] = averageVisibility[jointA] >= averageVisibility[jointB] ? jointA : jointB;
+    });
 
-      const avgAngleKeys = Object.keys(avgAngleConfig) as (keyof typeof avgAngleConfig)[];
+    const dominantJointData = analysisData.time_series.map(frame => {
+      const newFrame: { [key: string]: any } = { time: frame.time };
+      Object.keys(dominantJoints).forEach(pairName => {
+        const dominantJoint = dominantJoints[pairName];
+        newFrame[`${pairName}_angle`] = frame[`${dominantJoint}_angle` as keyof TimeSeriesDataPoint];
+        newFrame[`${pairName}_velocity`] = frame[`${dominantJoint}_velocity` as keyof TimeSeriesDataPoint];
+        newFrame[`${pairName}_acceleration`] = frame[`${dominantJoint}_acceleration` as keyof TimeSeriesDataPoint];
+      });
+      return newFrame;
+    });
 
-      const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, checked } = event.target;
-        // FIXED: Ensure the name is a valid AngleKey before setting state
-        setVisibleAngles(prevState => ({
-          ...prevState,
-          [name as AngleKey]: checked,
-        }));
-      };
+    return { dominantJointData, dominantJoints };
+  }, [analysisData]);
+
+  const angleConfig = {
+    shoulder: { name: "Shoulder", color: "#60A5FA" },
+    elbow: { name: "Elbow", color: "#FDBA74" },
+    wrist: { name: "Wrist", color: "#A5B4FC" },
+    hip: { name: "Hip", color: "#FBBF24" },
+    knee: { name: "Knee", color: "#34D399" },
+    ankle: { name: "Ankle", color: "#A78BFA" },
+  };
+
+  const [visibleAngles, setVisibleAngles] = useState<Record<string, boolean>>({
+    shoulder: true,
+    elbow: true,
+    wrist: false,
+    hip: true,
+    knee: true,
+    ankle: false,
+  });
+
+  const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = event.target;
+    setVisibleAngles(prevState => ({
+      ...prevState,
+      [name]: checked,
+    }));
+  };
 
   if (analysisData.status !== 'success' || !analysisData.metrics || !analysisData.rep_counting) {
     return (
@@ -281,9 +322,7 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
 
   const { metrics, tension_windows = [], time_series = [] } = analysisData;
   const tensionPlotData = processTensionData(tension_windows, time_series);
-
-  // FIXED: Explicitly cast the keys to AngleKey[] to satisfy TypeScript
-  const angleKeys = Object.keys(angleConfig) as AngleKey[];
+  const angleKeys = Object.keys(angleConfig);
 
   return (
     <div className="space-y-8">
@@ -385,9 +424,9 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
                   checked={visibleAngles[key]}
                   onChange={handleCheckboxChange}
                   className="form-checkbox h-4 w-4 rounded"
-                  style={{ accentColor: angleConfig[key].color }}
+                  style={{ accentColor: angleConfig[key as keyof typeof angleConfig].color }}
                 />
-                <span style={{ color: angleConfig[key].color }}>{angleConfig[key].name}</span>
+                <span style={{ color: angleConfig[key as keyof typeof angleConfig].color }}>{angleConfig[key as keyof typeof angleConfig].name}</span>
               </label>
             ))}
           </div>
@@ -395,7 +434,7 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
 
         <div className="h-[400px]">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={time_series}>
+            <LineChart data={dominantJointData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
               <XAxis
                 dataKey="time"
@@ -420,9 +459,9 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
                   <Line
                     key={key}
                     type="monotone"
-                    dataKey={key}
-                    stroke={angleConfig[key].color}
-                    name={angleConfig[key].name}
+                    dataKey={`${key}_angle`}
+                    stroke={angleConfig[key as keyof typeof angleConfig].color}
+                    name={angleConfig[key as keyof typeof angleConfig].name}
                     dot={false}
                     strokeWidth={2}
                   />
@@ -486,113 +525,28 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
             </ResponsiveContainer>
           </div>
         </div>
-        {avgAngleKeys.map((key) => (
-            <AngleChart
-                key={key}
-                title={`${avgAngleConfig[key].name} Angle`}
-                data={time_series}
-                dataKey={key}
-                color={avgAngleConfig[key].color}
-                unit="°"
-            />
+        
+        {Object.keys(dominantJoints).map((key) => (
+          <AngleChart
+              key={`${key}_velocity`}
+              title={`${angleConfig[key as keyof typeof angleConfig].name} Velocity`}
+              data={dominantJointData}
+              dataKey={`${key}_velocity`}
+              color={angleConfig[key as keyof typeof angleConfig].color}
+              unit="°/s"
+          />
         ))}
 
-        <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-green-500/20 rounded-lg">
-              <BarChart className="h-5 w-5 text-green-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-white">Hip Velocity Analysis</h3>
-          </div>
-          <div className="h-[280px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={time_series}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
-                <XAxis
-                  dataKey="time"
-                  type="number"
-                  stroke="#9CA3AF"
-                  style={{ fontSize: '11px' }}
-                  domain={['dataMin', 'dataMax']}
-                  unit="s"
-                />
-                <YAxis
-                  yAxisId="right"
-                  orientation="right"
-                  stroke="#34D399"
-                  style={{ fontSize: '11px' }}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#111827',
-                    border: '1px solid #374151',
-                    borderRadius: '12px',
-                    color: '#F9FAFB',
-                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
-                  }}
-                />
-                <Legend />
-                <Line
-                  yAxisId="right"
-                  type="monotone"
-                  dataKey="hip_velocity"
-                  stroke="#34D399"
-                  name="Hip Velocity"
-                  dot={false}
-                  strokeWidth={2}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-        <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-red-500/20 rounded-lg">
-              <BarChart className="h-5 w-5 text-red-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-white">Hip Acceleration Analysis</h3>
-          </div>
-          <div className="h-[280px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={time_series}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
-                <XAxis
-                  dataKey="time"
-                  type="number"
-                  stroke="#9CA3AF"
-                  style={{ fontSize: '11px' }}
-                  domain={['dataMin', 'dataMax']}
-                  unit="s"
-                />
-                <YAxis
-                  yAxisId="right"
-                  orientation="right"
-                  stroke="#F87171"
-                  style={{ fontSize: '11px' }}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#111827',
-                    border: '1px solid #374151',
-                    borderRadius: '12px',
-                    color: '#F9FAFB',
-                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
-                  }}
-                />
-                <Legend />
-                <Line
-                  yAxisId="right"
-                  type="monotone"
-                  dataKey="hip_acceleration"
-                  stroke="#F87171"
-                  name="Hip Acceleration"
-                  dot={false}
-                  strokeWidth={2}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        {Object.keys(dominantJoints).map((key) => (
+          <AngleChart
+              key={`${key}_acceleration`}
+              title={`${angleConfig[key as keyof typeof angleConfig].name} Acceleration`}
+              data={dominantJointData}
+              dataKey={`${key}_acceleration`}
+              color={angleConfig[key as keyof typeof angleConfig].color}
+              unit="°/s²"
+          />
+        ))}
       </div>
     </div>
   );
