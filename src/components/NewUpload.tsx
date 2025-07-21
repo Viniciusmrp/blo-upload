@@ -14,22 +14,48 @@ import { Oval } from "react-loader-spinner";
 import { CheckCircle, Upload, RefreshCw, AlertCircle } from "lucide-react";
 import { generateVideoId } from "../utils/generateVideoId";
 
-// Keep your existing interfaces (Metrics, TensionWindow, TimeSeriesDataPoint, AnalysisData) as they are.
-interface Metrics {
-  total_score: number;
-  intensity_score: number;
-  tut_score: number;
-  volume_score: number;
-  time_under_tension: number;
+interface Scores {
+  overall: number;
+  intensity: number;
+  tut: number;
   volume: number;
-  volume_unit: string;
-  avg_intensity?: number;
-  max_intensity?: number;
 }
 
-interface RepCounting {
-  completed_reps: number;
-  // Add other properties from rep_details if needed
+interface Reps {
+  total: number;
+  avg_duration: number;
+  details: any[]; // You can define a more specific type for details if needed
+}
+
+interface TotalVolume {
+  value: number;
+  unit: string;
+}
+
+interface Metrics {
+  time_under_tension: number;
+  time_efficiency: number;
+  total_volume: TotalVolume;
+  max_intensity: number;
+  avg_intensity: number;
+}
+
+interface TimeSeriesData {
+  volume_progression: any[]; // Define a more specific type if needed
+  kinematics: TimeSeriesDataPoint[];
+}
+
+interface AnalysisData {
+  status: 'success' | 'error';
+  scores?: Scores;
+  reps?: Reps;
+  metrics?: Metrics;
+  time_series_data?: TimeSeriesData;
+  error?: string;
+  // The following properties are deprecated in the new structure, but kept for compatibility
+  // if you have components that still use them.
+  tension_windows?: TensionWindow[];
+  rep_counting?: { completed_reps: number }; // Keep for compatibility if needed
 }
 
 interface TensionWindow {
@@ -77,15 +103,6 @@ interface TimeSeriesDataPoint {
     right_heel_visibility: number;
     left_foot_index_visibility: number;
     right_foot_index_visibility: number;
-}
-
-interface AnalysisData {
-  status: 'success' | 'error';
-  metrics?: Metrics;
-  tension_windows?: TensionWindow[];
-  time_series?: TimeSeriesDataPoint[];
-  error?: string;
-  rep_counting?: RepCounting;
 }
 
 const NewUpload = () => {

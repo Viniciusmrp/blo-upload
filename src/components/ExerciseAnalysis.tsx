@@ -3,19 +3,48 @@ import React, { useState, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { Award, Zap, Clock, BarChart, AlertCircle, Activity, ChevronDown, ChevronUp } from 'lucide-react';
 
-// Keep your existing interfaces unchanged
-interface Metrics {
-  total_score: number;
-  intensity_score: number;
-  tut_score: number;
-  volume_score: number;
-  time_under_tension: number;
+interface Scores {
+  overall: number;
+  intensity: number;
+  tut: number;
   volume: number;
-  volume_unit: string;
 }
 
-interface RepCounting {
-  completed_reps: number;
+interface Reps {
+  total: number;
+  avg_duration: number;
+  details: any[]; // You can define a more specific type for details if needed
+}
+
+interface TotalVolume {
+  value: number;
+  unit: string;
+}
+
+interface Metrics {
+  time_under_tension: number;
+  time_efficiency: number;
+  total_volume: TotalVolume;
+  max_intensity: number;
+  avg_intensity: number;
+}
+
+interface TimeSeriesData {
+  volume_progression: any[]; // Define a more specific type if needed
+  kinematics: TimeSeriesDataPoint[];
+}
+
+interface AnalysisData {
+  status: 'success' | 'error';
+  scores?: Scores;
+  reps?: Reps;
+  metrics?: Metrics;
+  time_series_data?: TimeSeriesData;
+  error?: string;
+  // The following properties are deprecated in the new structure, but kept for compatibility
+  // if you have components that still use them.
+  tension_windows?: TensionWindow[];
+  rep_counting?: { completed_reps: number }; // Keep for compatibility if needed
 }
 
 interface TensionWindow {
@@ -63,15 +92,6 @@ interface TimeSeriesDataPoint {
     right_heel_visibility: number;
     left_foot_index_visibility: number;
     right_foot_index_visibility: number;
-}
-
-interface AnalysisData {
-  status: 'success' | 'error';
-  metrics?: Metrics;
-  tension_windows?: TensionWindow[];
-  time_series?: TimeSeriesDataPoint[];
-  error?: string;
-  rep_counting?: RepCounting;
 }
 
 interface ExerciseAnalysisProps {
@@ -233,8 +253,12 @@ const jointPairs = {
 const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => {
   const [showCheckboxes, setShowCheckboxes] = useState(true);
 
+  // Correctly destructure the new analysisData object at the top
+  const { scores, reps, metrics, time_series_data, error } = analysisData;
+
   const { dominantJointData, dominantJoints } = useMemo(() => {
-    if (analysisData.status !== 'success' || !analysisData.time_series) {
+    // Check for the new nested kinematics property
+    if (analysisData.status !== 'success' || !time_series_data?.kinematics) {
       return { dominantJointData: [], dominantJoints: {} };
     }
 
@@ -243,7 +267,8 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
       visibilityScores[joint] = [];
     });
 
-    analysisData.time_series.forEach(frame => {
+    // Access the kinematics array for time series data
+    time_series_data.kinematics.forEach((frame: TimeSeriesDataPoint) => {
       Object.keys(visibilityScores).forEach(joint => {
         const visibilityKey = `${joint}_visibility` as keyof TimeSeriesDataPoint;
         if (typeof frame[visibilityKey] === 'number') {
@@ -264,19 +289,21 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
       dominantJoints[pairName] = averageVisibility[jointA] >= averageVisibility[jointB] ? jointA : jointB;
     });
 
-    const dominantJointData = analysisData.time_series.map(frame => {
+    const dominantJointData = time_series_data.kinematics.map(frame => {
       const newFrame: { [key: string]: any } = { time: frame.time };
       Object.keys(dominantJoints).forEach(pairName => {
         const dominantJoint = dominantJoints[pairName];
         newFrame[`${pairName}_angle`] = frame[`${dominantJoint}_angle` as keyof TimeSeriesDataPoint];
-        newFrame[`${pairName}_velocity`] = frame[`${dominantJoint}_velocity` as keyof TimeSeriesDataPoint];
-        newFrame[`${pairName}_acceleration`] = frame[`${dominantJoint}_acceleration` as keyof TimeSeriesDataPoint];
+        // Ensure velocity and acceleration properties exist on the frame object if you intend to use them
+        newFrame[`${pairName}_velocity`] = (frame as any)[`${dominantJoint}_velocity`];
+        newFrame[`${pairName}_acceleration`] = (frame as any)[`${dominantJoint}_acceleration`];
       });
       return newFrame;
     });
 
     return { dominantJointData, dominantJoints };
-  }, [analysisData]);
+  }, [analysisData, time_series_data]);
+
 
   const angleConfig = {
     shoulder: { name: "Shoulder", color: "#60A5FA" },
@@ -288,45 +315,35 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
   };
 
   const [visibleAngles, setVisibleAngles] = useState<Record<string, boolean>>({
-    shoulder: true,
-    elbow: true,
-    wrist: false,
-    hip: true,
-    knee: true,
-    ankle: false,
+    shoulder: true, elbow: true, wrist: false, hip: true, knee: true, ankle: false,
   });
 
   const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = event.target;
-    setVisibleAngles(prevState => ({
-      ...prevState,
-      [name]: checked,
-    }));
+    setVisibleAngles(prevState => ({ ...prevState, [name]: checked }));
   };
 
-  if (analysisData.status !== 'success' || !analysisData.metrics || !analysisData.rep_counting) {
+  // Update the condition to check for the new properties
+  if (analysisData.status !== 'success' || !scores || !reps || !metrics || !time_series_data) {
     return (
       <div className="bg-gradient-to-br from-red-900/20 to-red-800/20 rounded-xl p-6 shadow-lg border border-red-500/30 backdrop-blur-sm">
         <div className="text-red-400 flex items-center gap-3">
-          <div className="p-2 bg-red-500/20 rounded-lg">
-            <AlertCircle className="h-6 w-6 flex-shrink-0" />
-          </div>
+          <div className="p-2 bg-red-500/20 rounded-lg"><AlertCircle className="h-6 w-6 flex-shrink-0" /></div>
           <div>
             <p className="font-semibold text-lg">Analysis Error</p>
-            <p className="text-sm text-red-300 opacity-90">{analysisData.error || 'Analysis data is incomplete.'}</p>
+            <p className="text-sm text-red-300 opacity-90">{error || 'Analysis data is incomplete.'}</p>
           </div>
         </div>
       </div>
     );
   }
 
-  const { metrics, tension_windows = [], time_series = [] } = analysisData;
-  const tensionPlotData = processTensionData(tension_windows, time_series);
+  // Use the correct time series data for the tension plot
+  const tensionPlotData = processTensionData(analysisData.tension_windows || [], time_series_data.kinematics);
   const angleKeys = Object.keys(angleConfig);
 
   return (
     <div className="space-y-8">
-      {/* Enhanced Header with gradient text */}
       <div className="text-center space-y-4">
         <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-blue-600 bg-clip-text text-transparent">
           Exercise Analysis Results
@@ -337,215 +354,84 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
         <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto rounded-full"></div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <ScoreCard
-          icon={Award}
-          title="Overall Score"
-          score={metrics.total_score}
-          unit="/100"
-          colorClass="text-blue-400"
-          gradientFrom="from-blue-500"
-          gradientTo="to-blue-600"
-        />
-        <ScoreCard
-          icon={Zap}
-          title="Intensity Score"
-          score={metrics.intensity_score}
-          unit="/100"
-          colorClass="text-red-400"
-          gradientFrom="from-red-500"
-          gradientTo="to-red-600"
-        />
-        <ScoreCard
-          icon={Clock}
-          title="TUT Score"
-          score={metrics.tut_score}
-          unit="/100"
-          secondaryValue={metrics.time_under_tension}
-          secondaryUnit="s"
-          colorClass="text-yellow-400"
-          gradientFrom="from-yellow-500"
-          gradientTo="to-yellow-600"
-        />
-        <ScoreCard
-          icon={BarChart}
-          title="Volume Score"
-          score={metrics.volume_score}
-          unit="/100"
-          secondaryValue={metrics.volume}
-          secondaryUnit={metrics.volume_unit}
-          colorClass="text-green-400"
-          gradientFrom="from-green-500"
-          gradientTo="to-green-600"
-        />
+        <ScoreCard icon={Award} title="Overall Score" score={scores.overall} unit="/100" colorClass="text-blue-400" gradientFrom="from-blue-500" gradientTo="to-blue-600" />
+        <ScoreCard icon={Zap} title="Intensity Score" score={scores.intensity} unit="/100" colorClass="text-red-400" gradientFrom="from-red-500" gradientTo="to-red-600" />
+        <ScoreCard icon={Clock} title="TUT Score" score={scores.tut} unit="/100" secondaryValue={metrics.time_under_tension} secondaryUnit="s" colorClass="text-yellow-400" gradientFrom="from-yellow-500" gradientTo="to-yellow-600" />
+        <ScoreCard icon={BarChart} title="Volume Score" score={scores.volume} unit="/100" secondaryValue={metrics.total_volume.value} secondaryUnit={metrics.total_volume.unit} colorClass="text-green-400" gradientFrom="from-green-500" gradientTo="to-green-600" />
       </div>
-
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50 text-center group hover:shadow-2xl transition-all duration-300">
-          <div className="p-3 bg-purple-500/20 rounded-lg w-fit mx-auto mb-3 group-hover:bg-purple-500/30 transition-colors">
-            <Activity className="h-8 w-8 text-purple-400" />
-          </div>
-          <p className="text-3xl font-bold text-white mb-1">{analysisData.rep_counting.completed_reps}</p>
+          <div className="p-3 bg-purple-500/20 rounded-lg w-fit mx-auto mb-3 group-hover:bg-purple-500/30 transition-colors"><Activity className="h-8 w-8 text-purple-400" /></div>
+          <p className="text-3xl font-bold text-white mb-1">{reps.total}</p>
           <p className="text-sm text-gray-400">Total Repetitions</p>
         </div>
-
         <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50 text-center group hover:shadow-2xl transition-all duration-300">
-          <div className="p-3 bg-indigo-500/20 rounded-lg w-fit mx-auto mb-3 group-hover:bg-indigo-500/30 transition-colors">
-            <Clock className="h-8 w-8 text-indigo-400" />
-          </div>
-          <p className="text-3xl font-bold text-white mb-1">
-            {tension_windows.length > 0 ? (metrics.time_under_tension / tension_windows.length).toFixed(1) : '0.0'}s
-          </p>
+          <div className="p-3 bg-indigo-500/20 rounded-lg w-fit mx-auto mb-3 group-hover:bg-indigo-500/30 transition-colors"><Clock className="h-8 w-8 text-indigo-400" /></div>
+          <p className="text-3xl font-bold text-white mb-1">{reps.avg_duration.toFixed(1)}s</p>
           <p className="text-sm text-gray-400">Avg Rep Duration</p>
         </div>
-
         <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50 text-center group hover:shadow-2xl transition-all duration-300">
-          <div className="p-3 bg-orange-500/20 rounded-lg w-fit mx-auto mb-3 group-hover:bg-orange-500/30 transition-colors">
-            <Zap className="h-8 w-8 text-orange-400" />
-          </div>
-          <p className="text-3xl font-bold text-white mb-1">{(metrics.time_under_tension / (time_series.length > 0 ? time_series[time_series.length - 1].time : 1) * 100).toFixed(1)}%</p>
+          <div className="p-3 bg-orange-500/20 rounded-lg w-fit mx-auto mb-3 group-hover:bg-orange-500/30 transition-colors"><Zap className="h-8 w-8 text-orange-400" /></div>
+          <p className="text-3xl font-bold text-white mb-1">{metrics.time_efficiency.toFixed(1)}%</p>
           <p className="text-sm text-gray-400">Time Efficiency</p>
         </div>
       </div>
-       <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50">
+      <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold text-white">Combined Angle Analysis</h3>
           <button onClick={() => setShowCheckboxes(!showCheckboxes)} className="text-gray-400 hover:text-white">
             {showCheckboxes ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
           </button>
         </div>
-
         {showCheckboxes && (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-4 gap-y-2 mb-6">
             {angleKeys.map((key) => (
               <label key={key} className="flex items-center space-x-2 text-sm text-gray-300 cursor-pointer">
-                <input
-                  type="checkbox"
-                  name={key}
-                  checked={visibleAngles[key]}
-                  onChange={handleCheckboxChange}
-                  className="form-checkbox h-4 w-4 rounded"
-                  style={{ accentColor: angleConfig[key as keyof typeof angleConfig].color }}
-                />
+                <input type="checkbox" name={key} checked={visibleAngles[key]} onChange={handleCheckboxChange} className="form-checkbox h-4 w-4 rounded" style={{ accentColor: angleConfig[key as keyof typeof angleConfig].color }} />
                 <span style={{ color: angleConfig[key as keyof typeof angleConfig].color }}>{angleConfig[key as keyof typeof angleConfig].name}</span>
               </label>
             ))}
           </div>
         )}
-
         <div className="h-[400px]">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={dominantJointData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
-              <XAxis
-                dataKey="time"
-                type="number"
-                stroke="#9CA3AF"
-                style={{ fontSize: '11px' }}
-                domain={['dataMin', 'dataMax']}
-                unit="s"
-              />
+              <XAxis dataKey="time" type="number" stroke="#9CA3AF" style={{ fontSize: '11px' }} domain={['dataMin', 'dataMax']} unit="s" />
               <YAxis stroke="#9CA3AF" style={{ fontSize: '11px' }} unit="°" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#111827',
-                  border: '1px solid #374151',
-                  borderRadius: '12px',
-                  color: '#F9FAFB',
-                }}
-              />
+              <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '12px', color: '#F9FAFB' }} />
               <Legend />
-              {angleKeys.map((key) =>
-                visibleAngles[key] && (
-                  <Line
-                    key={key}
-                    type="monotone"
-                    dataKey={`${key}_angle`}
-                    stroke={angleConfig[key as keyof typeof angleConfig].color}
-                    name={angleConfig[key as keyof typeof angleConfig].name}
-                    dot={false}
-                    strokeWidth={2}
-                  />
-                )
-              )}
+              {angleKeys.map((key) => visibleAngles[key] && (
+                <Line key={key} type="monotone" dataKey={`${key}_angle`} stroke={angleConfig[key as keyof typeof angleConfig].color} name={angleConfig[key as keyof typeof angleConfig].name} dot={false} strokeWidth={2} />
+              ))}
             </LineChart>
           </ResponsiveContainer>
         </div>
       </div>
-
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
         <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50">
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-yellow-500/20 rounded-lg">
-              <Clock className="h-5 w-5 text-yellow-400" />
-            </div>
+            <div className="p-2 bg-yellow-500/20 rounded-lg"><Clock className="h-5 w-5 text-yellow-400" /></div>
             <h3 className="text-lg font-semibold text-white">Time Under Tension</h3>
           </div>
           <div className="h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={tensionPlotData}>
-                <defs>
-                  <linearGradient id="tensionGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#FBBF24" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#FBBF24" stopOpacity={0.1}/>
-                  </linearGradient>
-                </defs>
+                <defs><linearGradient id="tensionGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#FBBF24" stopOpacity={0.8}/><stop offset="95%" stopColor="#FBBF24" stopOpacity={0.1}/></linearGradient></defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
-                <XAxis
-                  dataKey="time"
-                  type="number"
-                  stroke="#9CA3AF"
-                  style={{ fontSize: '11px' }}
-                  domain={['dataMin', 'dataMax']}
-                  unit="s"
-                />
-                <YAxis
-                  stroke="#9CA3AF"
-                  style={{ fontSize: '11px' }}
-                  domain={[0, 1.2]}
-                  allowDecimals={false}
-                  ticks={[0, 1]}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#111827',
-                    border: '1px solid #374151',
-                    borderRadius: '12px',
-                    color: '#F9FAFB',
-                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
-                  }}
-                />
-                <Area
-                  type="stepAfter"
-                  dataKey="tension"
-                  stroke="#FBBF24"
-                  fill="url(#tensionGradient)"
-                  strokeWidth={3}
-                />
+                <XAxis dataKey="time" type="number" stroke="#9CA3AF" style={{ fontSize: '11px' }} domain={['dataMin', 'dataMax']} unit="s" />
+                <YAxis stroke="#9CA3AF" style={{ fontSize: '11px' }} domain={[0, 1.2]} allowDecimals={false} ticks={[0, 1]} />
+                <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '12px', color: '#F9FAFB', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }} />
+                <Area type="stepAfter" dataKey="tension" stroke="#FBBF24" fill="url(#tensionGradient)" strokeWidth={3} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
-        
         {Object.keys(dominantJoints).map((key) => (
-          <AngleChart
-              key={`${key}_velocity`}
-              title={`${angleConfig[key as keyof typeof angleConfig].name} Velocity`}
-              data={dominantJointData}
-              dataKey={`${key}_velocity`}
-              color={angleConfig[key as keyof typeof angleConfig].color}
-              unit="°/s"
-          />
+          <AngleChart key={`${key}_velocity`} title={`${angleConfig[key as keyof typeof angleConfig].name} Velocity`} data={dominantJointData} dataKey={`${key}_velocity`} color={angleConfig[key as keyof typeof angleConfig].color} unit="°/s" />
         ))}
-
         {Object.keys(dominantJoints).map((key) => (
-          <AngleChart
-              key={`${key}_acceleration`}
-              title={`${angleConfig[key as keyof typeof angleConfig].name} Acceleration`}
-              data={dominantJointData}
-              dataKey={`${key}_acceleration`}
-              color={angleConfig[key as keyof typeof angleConfig].color}
-              unit="°/s²"
-          />
+          <AngleChart key={`${key}_acceleration`} title={`${angleConfig[key as keyof typeof angleConfig].name} Acceleration`} data={dominantJointData} dataKey={`${key}_acceleration`} color={angleConfig[key as keyof typeof angleConfig].color} unit="°/s²" />
         ))}
       </div>
     </div>
