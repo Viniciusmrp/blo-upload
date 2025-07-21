@@ -64,29 +64,54 @@ interface TensionWindow {
 }
 
 interface TimeSeriesDataPoint {
-  time: number;
-  left_knee_angle: number;
-  right_knee_angle: number;
-  left_hip_angle: number;
-  right_hip_angle: number;
-  left_ankle_angle: number;
-  right_ankle_angle: number;
-  left_shoulder_angle: number;
-  right_shoulder_angle: number;
-  left_elbow_angle: number;
-  right_elbow_angle: number;
-  left_wrist_angle: number;
-  right_wrist_angle: number;
-  hip_velocity: number;
-  hip_acceleration: number;
-  is_concentric: boolean;
-  phase_intensity: number;
-  avg_knee_angle: number;
-  avg_hip_angle: number;
-  avg_ankle_angle: number;
-  avg_shoulder_angle: number;
-  avg_elbow_angle: number;
-  avg_wrist_angle: number;
+    time: number;
+    left_knee_angle: number;
+    right_knee_angle: number;
+    left_hip_angle: number;
+    right_hip_angle: number;
+    left_ankle_angle: number;
+    right_ankle_angle: number;
+    left_shoulder_angle: number;
+    right_shoulder_angle: number;
+    left_elbow_angle: number;
+    right_elbow_angle: number;
+    left_wrist_angle: number;
+    right_wrist_angle: number;
+    hip_velocity: number;
+    hip_acceleration: number;
+    is_concentric: boolean;
+    phase_intensity: number;
+    avg_knee_angle: number;
+    avg_hip_angle: number;
+    avg_ankle_angle: number;
+    avg_shoulder_angle: number;
+    avg_elbow_angle: number;
+    avg_wrist_angle: number;
+    left_shoulder_visibility: number;
+    right_shoulder_visibility: number;
+    left_elbow_visibility: number;
+    right_elbow_visibility: number;
+    left_wrist_visibility: number;
+    right_wrist_visibility: number;
+    left_hip_visibility: number;
+    right_hip_visibility: number;
+    left_knee_visibility: number;
+    right_knee_visibility: number;
+    left_ankle_visibility: number;
+    right_ankle_visibility: number;
+    left_heel_visibility: number;
+    right_heel_visibility: number;
+    left_foot_index_visibility: number;
+    right_foot_index_visibility: number;
+}
+
+interface AnalysisData {
+  status: 'success' | 'error';
+  metrics?: Metrics;
+  tension_windows?: TensionWindow[];
+  time_series?: TimeSeriesDataPoint[];
+  error?: string;
+  rep_counting?: RepCounting;
 }
 
 const NewUpload = () => {
