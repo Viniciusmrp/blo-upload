@@ -14,6 +14,7 @@ import { Oval } from "react-loader-spinner";
 import { CheckCircle, Upload, RefreshCw, AlertCircle } from "lucide-react";
 import { generateVideoId } from "../utils/generateVideoId";
 
+// Updated interfaces to match the new JSON structure
 interface Scores {
   overall: number;
   intensity: number;
@@ -24,7 +25,7 @@ interface Scores {
 interface Reps {
   total: number;
   avg_duration: number;
-  details: any[];
+  details: any[]; // Kept as any for simplicity, but you can define a more specific type
 }
 
 interface TotalVolume {
@@ -40,56 +41,51 @@ interface Metrics {
   avg_intensity: number;
 }
 
-interface TimeSeriesData {
-  volume_progression: any[];
-  kinematics: TimeSeriesDataPoint[];
-}
-
-interface TensionWindow {
-  start: number;
-  end: number;
-}
-
 interface TimeSeriesDataPoint {
-    time: number;
-    left_knee_angle: number;
-    right_knee_angle: number;
-    left_hip_angle: number;
-    right_hip_angle: number;
-    left_ankle_angle: number;
-    right_ankle_angle: number;
-    left_shoulder_angle: number;
-    right_shoulder_angle: number;
-    left_elbow_angle: number;
-    right_elbow_angle: number;
-    left_wrist_angle: number;
-    right_wrist_angle: number;
-    hip_velocity: number;
-    hip_acceleration: number;
-    is_concentric: boolean;
-    phase_intensity: number;
-    avg_knee_angle: number;
-    avg_hip_angle: number;
-    avg_ankle_angle: number;
-    avg_shoulder_angle: number;
-    avg_elbow_angle: number;
-    avg_wrist_angle: number;
-    left_shoulder_visibility: number;
-    right_shoulder_visibility: number;
-    left_elbow_visibility: number;
-    right_elbow_visibility: number;
-    left_wrist_visibility: number;
-    right_wrist_visibility: number;
-    left_hip_visibility: number;
-    right_hip_visibility: number;
-    left_knee_visibility: number;
-    right_knee_visibility: number;
-    left_ankle_visibility: number;
-    right_ankle_visibility: number;
-    left_heel_visibility: number;
-    right_heel_visibility: number;
-    left_foot_index_visibility: number;
-    right_foot_index_visibility: number;
+  time: number;
+  left_ankle_angle: number;
+  left_ankle_velocity: number;
+  left_ankle_acceleration: number;
+  right_ankle_angle: number;
+  right_ankle_velocity: number;
+  right_ankle_acceleration: number;
+  left_knee_angle: number;
+  left_knee_velocity: number;
+  left_knee_acceleration: number;
+  right_knee_angle: number;
+  right_knee_velocity: number;
+  right_knee_acceleration: number;
+  left_hip_angle: number;
+  left_hip_velocity: number;
+  left_hip_acceleration: number;
+  right_hip_angle: number;
+  right_hip_velocity: number;
+  right_hip_acceleration: number;
+  left_shoulder_angle: number;
+  left_shoulder_velocity: number;
+  left_shoulder_acceleration: number;
+  right_shoulder_angle: number;
+  right_shoulder_velocity: number;
+  right_shoulder_acceleration: number;
+  left_elbow_angle: number;
+  left_elbow_velocity: number;
+  left_elbow_acceleration: number;
+  right_elbow_angle: number;
+  right_elbow_velocity: number;
+  right_elbow_acceleration: number;
+  left_wrist_angle: number;
+  left_wrist_velocity: number;
+  left_wrist_acceleration: number;
+  right_wrist_angle: number;
+  right_wrist_velocity: number;
+  right_wrist_acceleration: number;
+  hip_height: number;
+  hip_velocity: number;
+  hip_acceleration: number;
+}
+
+interface TimeSeriesData {
+  kinematics: TimeSeriesDataPoint[];
 }
 
 interface AnalysisData {
@@ -99,8 +95,6 @@ interface AnalysisData {
   metrics?: Metrics;
   time_series_data?: TimeSeriesData;
   error?: string;
-  tension_windows?: TensionWindow[];
-  rep_counting?: { completed_reps: number };
 }
 
 const NewUpload = () => {
@@ -160,8 +154,9 @@ const NewUpload = () => {
             );
             console.log('RAW Backend Analysis Response:', JSON.stringify(analysisResponse.data, null, 2));
 
-            if (analysisResponse.data.status === 'success') {
-              setAnalysisData(analysisResponse.data);
+            // Assuming the backend sends a status property in the root of the response
+            if (analysisResponse.data) {
+                setAnalysisData({ ...analysisResponse.data, status: 'success' });
             } else {
               setAnalysisData({ status: 'error', error: 'Analysis did not complete successfully.' });
             }
@@ -279,53 +274,50 @@ const NewUpload = () => {
     }
   };
 
-  // Condition to show the results view
   if (uploadStatus === 'complete' && analysisData) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white p-4 sm:p-6 lg:p-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold text-blue-400">Analysis Complete</h1>
-            <button
-              onClick={handleUploadAnother}
-              className="flex items-center justify-center bg-blue-500 hover:bg-blue-600 rounded-lg py-2 px-4 text-white font-medium transition-colors"
-            >
-              <RefreshCw className="h-5 w-5 mr-2" />
-              Upload Another Video
-            </button>
-          </div>
-
-          <div className="space-y-8">
-            {analysisData.status === 'success' ? (
-              <ExerciseAnalysis analysisData={analysisData} />
-            ) : (
-              <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
-                <div className="text-red-400 flex items-center gap-2">
-                  <AlertCircle className="h-5 w-5" />
-                  <p>Analysis Error: {analysisData.error || 'Failed to load the analysis results'}</p>
+        <div className="min-h-screen bg-gray-900 text-white p-4 sm:p-6 lg:p-8">
+            <div className="max-w-7xl mx-auto">
+                <div className="flex justify-between items-center mb-6">
+                    <h1 className="text-2xl font-bold text-blue-400">Analysis Complete</h1>
+                    <button
+                        onClick={handleUploadAnother}
+                        className="flex items-center justify-center bg-blue-500 hover:bg-blue-600 rounded-lg py-2 px-4 text-white font-medium transition-colors"
+                    >
+                        <RefreshCw className="h-5 w-5 mr-2" />
+                        Upload Another Video
+                    </button>
                 </div>
-              </div>
-            )}
 
-            {processedVideoUrl && (
-              <div className="bg-gray-800 rounded-xl p-4 shadow-lg">
-                <h3 className="text-lg font-semibold mb-4 text-center">Processed Video</h3>
-                <video
-                  src={processedVideoUrl}
-                  controls
-                  className="w-full max-w-md mx-auto rounded-lg"
-                  key={processedVideoUrl}
-                />
-              </div>
-            )}
-          </div>
+                <div className="space-y-8">
+                    {analysisData.status === 'success' ? (
+                        <ExerciseAnalysis analysisData={analysisData} />
+                    ) : (
+                        <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
+                            <div className="text-red-400 flex items-center gap-2">
+                                <AlertCircle className="h-5 w-5" />
+                                <p>Analysis Error: {analysisData.error || 'Failed to load the analysis results'}</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {processedVideoUrl && (
+                        <div className="bg-gray-800 rounded-xl p-4 shadow-lg">
+                            <h3 className="text-lg font-semibold mb-4 text-center">Processed Video</h3>
+                            <video
+                                src={processedVideoUrl}
+                                controls
+                                className="w-full max-w-md mx-auto rounded-lg"
+                                key={processedVideoUrl}
+                            />
+                        </div>
+                    )}
+                </div>
+            </div>
         </div>
-      </div>
     );
   }
 
-
-  // Default view for uploading
   return (
     <div className="w-full">
         <div className="w-full max-w-6xl mx-auto">

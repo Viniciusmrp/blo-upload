@@ -3,6 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { Award, Zap, Clock, BarChart, AlertCircle, Activity, ChevronDown, ChevronUp } from 'lucide-react';
 
+// Updated interfaces to match the new JSON structure
 interface Scores {
   overall: number;
   intensity: number;
@@ -13,7 +14,7 @@ interface Scores {
 interface Reps {
   total: number;
   avg_duration: number;
-  details: any[]; // You can define a more specific type for details if needed
+  details: any[];
 }
 
 interface TotalVolume {
@@ -29,8 +30,50 @@ interface Metrics {
   avg_intensity: number;
 }
 
+interface TimeSeriesDataPoint {
+  time: number;
+  left_ankle_angle: number;
+  left_ankle_velocity: number;
+  left_ankle_acceleration: number;
+  right_ankle_angle: number;
+  right_ankle_velocity: number;
+  right_ankle_acceleration: number;
+  left_knee_angle: number;
+  left_knee_velocity: number;
+  left_knee_acceleration: number;
+  right_knee_angle: number;
+  right_knee_velocity: number;
+  right_knee_acceleration: number;
+  left_hip_angle: number;
+  left_hip_velocity: number;
+  left_hip_acceleration: number;
+  right_hip_angle: number;
+  right_hip_velocity: number;
+  right_hip_acceleration: number;
+  left_shoulder_angle: number;
+  left_shoulder_velocity: number;
+  left_shoulder_acceleration: number;
+  right_shoulder_angle: number;
+  right_shoulder_velocity: number;
+  right_shoulder_acceleration: number;
+  left_elbow_angle: number;
+  left_elbow_velocity: number;
+  left_elbow_acceleration: number;
+  right_elbow_angle: number;
+  right_elbow_velocity: number;
+  right_elbow_acceleration: number;
+  left_wrist_angle: number;
+  left_wrist_velocity: number;
+  left_wrist_acceleration: number;
+  right_wrist_angle: number;
+  right_wrist_velocity: number;
+  right_wrist_acceleration: number;
+  hip_height: number;
+  hip_velocity: number;
+  hip_acceleration: number;
+}
+
 interface TimeSeriesData {
-  volume_progression: any[]; // Define a more specific type if needed
   kinematics: TimeSeriesDataPoint[];
 }
 
@@ -41,64 +84,12 @@ interface AnalysisData {
   metrics?: Metrics;
   time_series_data?: TimeSeriesData;
   error?: string;
-  // The following properties are deprecated in the new structure, but kept for compatibility
-  // if you have components that still use them.
-  tension_windows?: TensionWindow[];
-  rep_counting?: { completed_reps: number }; // Keep for compatibility if needed
-}
-
-interface TensionWindow {
-  start: number;
-  end: number;
-}
-
-interface TimeSeriesDataPoint {
-    time: number;
-    left_knee_angle: number;
-    right_knee_angle: number;
-    left_hip_angle: number;
-    right_hip_angle: number;
-    left_ankle_angle: number;
-    right_ankle_angle: number;
-    left_shoulder_angle: number;
-    right_shoulder_angle: number;
-    left_elbow_angle: number;
-    right_elbow_angle: number;
-    left_wrist_angle: number;
-    right_wrist_angle: number;
-    hip_velocity: number;
-    hip_acceleration: number;
-    is_concentric: boolean;
-    phase_intensity: number;
-    avg_knee_angle: number;
-    avg_hip_angle: number;
-    avg_ankle_angle: number;
-    avg_shoulder_angle: number;
-    avg_elbow_angle: number;
-    avg_wrist_angle: number;
-    left_shoulder_visibility: number;
-    right_shoulder_visibility: number;
-    left_elbow_visibility: number;
-    right_elbow_visibility: number;
-    left_wrist_visibility: number;
-    right_wrist_visibility: number;
-    left_hip_visibility: number;
-    right_hip_visibility: number;
-    left_knee_visibility: number;
-    right_knee_visibility: number;
-    left_ankle_visibility: number;
-    right_ankle_visibility: number;
-    left_heel_visibility: number;
-    right_heel_visibility: number;
-    left_foot_index_visibility: number;
-    right_foot_index_visibility: number;
 }
 
 interface ExerciseAnalysisProps {
   analysisData: AnalysisData;
 }
 
-// Enhanced Score Card Component with professional styling
 const ScoreCard = ({
   icon: Icon,
   title,
@@ -163,27 +154,7 @@ const ScoreCard = ({
   );
 };
 
-const processTensionData = (tensionWindows: TensionWindow[], timeSeries: TimeSeriesDataPoint[]) => {
-  if (!tensionWindows || tensionWindows.length === 0 || !timeSeries || timeSeries.length === 0) return [];
-
-  const plotData: { time: number; tension: number }[] = [];
-  const totalDuration = timeSeries[timeSeries.length - 1].time;
-
-  plotData.push({ time: 0, tension: 0 });
-
-  tensionWindows.forEach(window => {
-    plotData.push({ time: window.start - 0.001, tension: 0 });
-    plotData.push({ time: window.start, tension: 1 });
-    plotData.push({ time: window.end, tension: 1 });
-    plotData.push({ time: window.end + 0.001, tension: 0 });
-  });
-
-  plotData.push({ time: totalDuration, tension: 0 });
-  return plotData.sort((a, b) => a.time - b.time);
-};
-
-// FIXED: Added explicit types for the component's props
-interface AngleChartProps {
+interface ChartProps {
     title: string;
     data: any[];
     dataKey: string;
@@ -191,7 +162,7 @@ interface AngleChartProps {
     unit: string;
 }
 
-const AngleChart: React.FC<AngleChartProps> = ({ title, data, dataKey, color, unit }) => (
+const Chart: React.FC<ChartProps> = ({ title, data, dataKey, color, unit }) => (
     <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50">
       <div className="flex items-center gap-3 mb-6">
         <div className={`p-2 bg-gray-700 rounded-lg`}>
@@ -240,90 +211,46 @@ const AngleChart: React.FC<AngleChartProps> = ({ title, data, dataKey, color, un
     </div>
 );
 
-// Define joint pairs for visibility analysis
-const jointPairs = {
-    shoulder: ['left_shoulder', 'right_shoulder'],
-    elbow: ['left_elbow', 'right_elbow'],
-    wrist: ['left_wrist', 'right_wrist'],
-    hip: ['left_hip', 'right_hip'],
-    knee: ['left_knee', 'right_knee'],
-    ankle: ['left_ankle', 'right_ankle'],
-};
-
 const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => {
-  const [showCheckboxes, setShowCheckboxes] = useState(true);
+  const [showAngleCheckboxes, setShowAngleCheckboxes] = useState(true);
+  const [showVelocityCheckboxes, setShowVelocityCheckboxes] = useState(false);
+  const [showAccelerationCheckboxes, setShowAccelerationCheckboxes] = useState(false);
 
-  // Correctly destructure the new analysisData object at the top
   const { scores, reps, metrics, time_series_data, error } = analysisData;
 
-  const { dominantJointData, dominantJoints } = useMemo(() => {
-    // Check for the new nested kinematics property
+  const kinematicsData = useMemo(() => {
     if (analysisData.status !== 'success' || !time_series_data?.kinematics) {
-      return { dominantJointData: [], dominantJoints: {} };
+      return [];
     }
-
-    const visibilityScores: { [key: string]: number[] } = {};
-    Object.values(jointPairs).flat().forEach(joint => {
-      visibilityScores[joint] = [];
-    });
-
-    // Access the kinematics array for time series data
-    time_series_data.kinematics.forEach((frame: TimeSeriesDataPoint) => {
-      Object.keys(visibilityScores).forEach(joint => {
-        const visibilityKey = `${joint}_visibility` as keyof TimeSeriesDataPoint;
-        if (typeof frame[visibilityKey] === 'number') {
-          visibilityScores[joint].push(frame[visibilityKey] as number);
-        }
-      });
-    });
-
-    const averageVisibility: { [key: string]: number } = {};
-    Object.keys(visibilityScores).forEach(joint => {
-      const scores = visibilityScores[joint];
-      averageVisibility[joint] = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
-    });
-
-    const dominantJoints: { [key: string]: string } = {};
-    Object.keys(jointPairs).forEach(pairName => {
-      const [jointA, jointB] = jointPairs[pairName as keyof typeof jointPairs];
-      dominantJoints[pairName] = averageVisibility[jointA] >= averageVisibility[jointB] ? jointA : jointB;
-    });
-
-    const dominantJointData = time_series_data.kinematics.map(frame => {
-      const newFrame: { [key: string]: any } = { time: frame.time };
-      Object.keys(dominantJoints).forEach(pairName => {
-        const dominantJoint = dominantJoints[pairName];
-        newFrame[`${pairName}_angle`] = frame[`${dominantJoint}_angle` as keyof TimeSeriesDataPoint];
-        // Ensure velocity and acceleration properties exist on the frame object if you intend to use them
-        newFrame[`${pairName}_velocity`] = (frame as any)[`${dominantJoint}_velocity`];
-        newFrame[`${pairName}_acceleration`] = (frame as any)[`${dominantJoint}_acceleration`];
-      });
-      return newFrame;
-    });
-
-    return { dominantJointData, dominantJoints };
+    return time_series_data.kinematics;
   }, [analysisData, time_series_data]);
 
-
-  const angleConfig = {
+  const jointConfig = {
+    ankle: { name: "Ankle", color: "#A78BFA" },
+    knee: { name: "Knee", color: "#34D399" },
+    hip: { name: "Hip", color: "#FBBF24" },
     shoulder: { name: "Shoulder", color: "#60A5FA" },
     elbow: { name: "Elbow", color: "#FDBA74" },
     wrist: { name: "Wrist", color: "#A5B4FC" },
-    hip: { name: "Hip", color: "#FBBF24" },
-    knee: { name: "Knee", color: "#34D399" },
-    ankle: { name: "Ankle", color: "#A78BFA" },
   };
 
   const [visibleAngles, setVisibleAngles] = useState<Record<string, boolean>>({
-    shoulder: true, elbow: true, wrist: false, hip: true, knee: true, ankle: false,
+    ankle: true, knee: true, hip: true, shoulder: true, elbow: true, wrist: false,
   });
 
-  const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const [visibleVelocities, setVisibleVelocities] = useState<Record<string, boolean>>({
+    ankle: false, knee: true, hip: true, shoulder: false, elbow: false, wrist: false,
+  });
+
+  const [visibleAccelerations, setVisibleAccelerations] = useState<Record<string, boolean>>({
+    ankle: false, knee: true, hip: true, shoulder: false, elbow: false, wrist: false,
+  });
+
+  const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>, setVisible: React.Dispatch<React.SetStateAction<Record<string, boolean>>>) => {
     const { name, checked } = event.target;
-    setVisibleAngles(prevState => ({ ...prevState, [name]: checked }));
+    setVisible(prevState => ({ ...prevState, [name]: checked }));
   };
 
-  // Update the condition to check for the new properties
   if (analysisData.status !== 'success' || !scores || !reps || !metrics || !time_series_data) {
     return (
       <div className="bg-gradient-to-br from-red-900/20 to-red-800/20 rounded-xl p-6 shadow-lg border border-red-500/30 backdrop-blur-sm">
@@ -338,9 +265,7 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
     );
   }
 
-  // Use the correct time series data for the tension plot
-  const tensionPlotData = processTensionData(analysisData.tension_windows || [], time_series_data.kinematics);
-  const angleKeys = Object.keys(angleConfig);
+  const jointKeys = Object.keys(jointConfig);
 
   return (
     <div className="space-y-8">
@@ -376,63 +301,116 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
           <p className="text-sm text-gray-400">Time Efficiency</p>
         </div>
       </div>
+      
+      {/* Angle Chart */}
       <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-white">Combined Angle Analysis</h3>
-          <button onClick={() => setShowCheckboxes(!showCheckboxes)} className="text-gray-400 hover:text-white">
-            {showCheckboxes ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          <h3 className="text-lg font-semibold text-white">Joint Angle Analysis</h3>
+          <button onClick={() => setShowAngleCheckboxes(!showAngleCheckboxes)} className="text-gray-400 hover:text-white">
+            {showAngleCheckboxes ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
           </button>
         </div>
-        {showCheckboxes && (
+        {showAngleCheckboxes && (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-4 gap-y-2 mb-6">
-            {angleKeys.map((key) => (
+            {jointKeys.map((key) => (
               <label key={key} className="flex items-center space-x-2 text-sm text-gray-300 cursor-pointer">
-                <input type="checkbox" name={key} checked={visibleAngles[key]} onChange={handleCheckboxChange} className="form-checkbox h-4 w-4 rounded" style={{ accentColor: angleConfig[key as keyof typeof angleConfig].color }} />
-                <span style={{ color: angleConfig[key as keyof typeof angleConfig].color }}>{angleConfig[key as keyof typeof angleConfig].name}</span>
+                <input type="checkbox" name={key} checked={visibleAngles[key]} onChange={(e) => handleCheckboxChange(e, setVisibleAngles)} className="form-checkbox h-4 w-4 rounded" style={{ accentColor: jointConfig[key as keyof typeof jointConfig].color }} />
+                <span style={{ color: jointConfig[key as keyof typeof jointConfig].color }}>{jointConfig[key as keyof typeof jointConfig].name}</span>
               </label>
             ))}
           </div>
         )}
         <div className="h-[400px]">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={dominantJointData}>
+            <LineChart data={kinematicsData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
               <XAxis dataKey="time" type="number" stroke="#9CA3AF" style={{ fontSize: '11px' }} domain={['dataMin', 'dataMax']} unit="s" />
               <YAxis stroke="#9CA3AF" style={{ fontSize: '11px' }} unit="°" />
               <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '12px', color: '#F9FAFB' }} />
               <Legend />
-              {angleKeys.map((key) => visibleAngles[key] && (
-                <Line key={key} type="monotone" dataKey={`${key}_angle`} stroke={angleConfig[key as keyof typeof angleConfig].color} name={angleConfig[key as keyof typeof angleConfig].name} dot={false} strokeWidth={2} />
+              {jointKeys.map((key) => visibleAngles[key] && (
+                <Line key={`left-${key}-angle`} type="monotone" dataKey={`left_${key}_angle`} stroke={jointConfig[key as keyof typeof jointConfig].color} name={`Left ${jointConfig[key as keyof typeof jointConfig].name}`} dot={false} strokeWidth={2} />
+              ))}
+              {jointKeys.map((key) => visibleAngles[key] && (
+                <Line key={`right-${key}-angle`} type="monotone" dataKey={`right_${key}_angle`} stroke={jointConfig[key as keyof typeof jointConfig].color} name={`Right ${jointConfig[key as keyof typeof jointConfig].name}`} dot={false} strokeWidth={2} strokeDasharray="5 5"/>
               ))}
             </LineChart>
           </ResponsiveContainer>
         </div>
       </div>
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-        <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-yellow-500/20 rounded-lg"><Clock className="h-5 w-5 text-yellow-400" /></div>
-            <h3 className="text-lg font-semibold text-white">Time Under Tension</h3>
-          </div>
-          <div className="h-[280px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={tensionPlotData}>
-                <defs><linearGradient id="tensionGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#FBBF24" stopOpacity={0.8}/><stop offset="95%" stopColor="#FBBF24" stopOpacity={0.1}/></linearGradient></defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
-                <XAxis dataKey="time" type="number" stroke="#9CA3AF" style={{ fontSize: '11px' }} domain={['dataMin', 'dataMax']} unit="s" />
-                <YAxis stroke="#9CA3AF" style={{ fontSize: '11px' }} domain={[0, 1.2]} allowDecimals={false} ticks={[0, 1]} />
-                <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '12px', color: '#F9FAFB', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }} />
-                <Area type="stepAfter" dataKey="tension" stroke="#FBBF24" fill="url(#tensionGradient)" strokeWidth={3} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+        
+      {/* Velocity Chart */}
+      <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-white">Joint Velocity Analysis</h3>
+          <button onClick={() => setShowVelocityCheckboxes(!showVelocityCheckboxes)} className="text-gray-400 hover:text-white">
+            {showVelocityCheckboxes ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          </button>
         </div>
-        {Object.keys(dominantJoints).map((key) => (
-          <AngleChart key={`${key}_velocity`} title={`${angleConfig[key as keyof typeof angleConfig].name} Velocity`} data={dominantJointData} dataKey={`${key}_velocity`} color={angleConfig[key as keyof typeof angleConfig].color} unit="°/s" />
-        ))}
-        {Object.keys(dominantJoints).map((key) => (
-          <AngleChart key={`${key}_acceleration`} title={`${angleConfig[key as keyof typeof angleConfig].name} Acceleration`} data={dominantJointData} dataKey={`${key}_acceleration`} color={angleConfig[key as keyof typeof angleConfig].color} unit="°/s²" />
-        ))}
+        {showVelocityCheckboxes && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-4 gap-y-2 mb-6">
+            {jointKeys.map((key) => (
+              <label key={key} className="flex items-center space-x-2 text-sm text-gray-300 cursor-pointer">
+                <input type="checkbox" name={key} checked={visibleVelocities[key]} onChange={(e) => handleCheckboxChange(e, setVisibleVelocities)} className="form-checkbox h-4 w-4 rounded" style={{ accentColor: jointConfig[key as keyof typeof jointConfig].color }} />
+                <span style={{ color: jointConfig[key as keyof typeof jointConfig].color }}>{jointConfig[key as keyof typeof jointConfig].name}</span>
+              </label>
+            ))}
+          </div>
+        )}
+        <div className="h-[400px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={kinematicsData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
+              <XAxis dataKey="time" type="number" stroke="#9CA3AF" style={{ fontSize: '11px' }} domain={['dataMin', 'dataMax']} unit="s" />
+              <YAxis stroke="#9CA3AF" style={{ fontSize: '11px' }} unit="°/s" />
+              <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '12px', color: '#F9FAFB' }} />
+              <Legend />
+              {jointKeys.map((key) => visibleVelocities[key] && (
+                <Line key={`left-${key}-velocity`} type="monotone" dataKey={`left_${key}_velocity`} stroke={jointConfig[key as keyof typeof jointConfig].color} name={`Left ${jointConfig[key as keyof typeof jointConfig].name}`} dot={false} strokeWidth={2} />
+              ))}
+                {jointKeys.map((key) => visibleVelocities[key] && (
+                <Line key={`right-${key}-velocity`} type="monotone" dataKey={`right_${key}_velocity`} stroke={jointConfig[key as keyof typeof jointConfig].color} name={`Right ${jointConfig[key as keyof typeof jointConfig].name}`} dot={false} strokeWidth={2} strokeDasharray="5 5"/>
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+        
+      {/* Acceleration Chart */}
+      <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-white">Joint Acceleration Analysis</h3>
+          <button onClick={() => setShowAccelerationCheckboxes(!showAccelerationCheckboxes)} className="text-gray-400 hover:text-white">
+            {showAccelerationCheckboxes ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          </button>
+        </div>
+        {showAccelerationCheckboxes && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-4 gap-y-2 mb-6">
+            {jointKeys.map((key) => (
+              <label key={key} className="flex items-center space-x-2 text-sm text-gray-300 cursor-pointer">
+                <input type="checkbox" name={key} checked={visibleAccelerations[key]} onChange={(e) => handleCheckboxChange(e, setVisibleAccelerations)} className="form-checkbox h-4 w-4 rounded" style={{ accentColor: jointConfig[key as keyof typeof jointConfig].color }} />
+                <span style={{ color: jointConfig[key as keyof typeof jointConfig].color }}>{jointConfig[key as keyof typeof jointConfig].name}</span>
+              </label>
+            ))}
+          </div>
+        )}
+        <div className="h-[400px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={kinematicsData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
+              <XAxis dataKey="time" type="number" stroke="#9CA3AF" style={{ fontSize: '11px' }} domain={['dataMin', 'dataMax']} unit="s" />
+              <YAxis stroke="#9CA3AF" style={{ fontSize: '11px' }} unit="°/s²" />
+              <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '12px', color: '#F9FAFB' }} />
+              <Legend />
+              {jointKeys.map((key) => visibleAccelerations[key] && (
+                <Line key={`left-${key}-acceleration`} type="monotone" dataKey={`left_${key}_acceleration`} stroke={jointConfig[key as keyof typeof jointConfig].color} name={`Left ${jointConfig[key as keyof typeof jointConfig].name}`} dot={false} strokeWidth={2} />
+              ))}
+              {jointKeys.map((key) => visibleAccelerations[key] && (
+                <Line key={`right-${key}-acceleration`} type="monotone" dataKey={`right_${key}_acceleration`} stroke={jointConfig[key as keyof typeof jointConfig].color} name={`Right ${jointConfig[key as keyof typeof jointConfig].name}`} dot={false} strokeWidth={2} strokeDasharray="5 5"/>
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </div>
   );
