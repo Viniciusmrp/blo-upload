@@ -290,7 +290,7 @@ const NewUpload = () => {
         <div className="min-h-screen bg-gray-900 text-white p-4 sm:p-6 lg:p-8">
             <div className="max-w-7xl mx-auto">
                 <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-2xl font-bold text-blue-400">Analysis Complete</h1>
+                    <h1 className="text-2xl font-bold text-blue-400">{selectedExercise} Analysis</h1>
                     <button
                         onClick={handleUploadAnother}
                         className="flex items-center justify-center bg-blue-500 hover:bg-blue-600 rounded-lg py-2 px-4 text-white font-medium transition-colors"
@@ -302,7 +302,7 @@ const NewUpload = () => {
 
                 <div className="space-y-8">
                     {analysisData.status === 'success' ? (
-                        <ExerciseAnalysis analysisData={analysisData} />
+                        <ExerciseAnalysis analysisData={analysisData} exercise={selectedExercise} />
                     ) : (
                         <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
                             <div className="text-red-400 flex items-center gap-2">

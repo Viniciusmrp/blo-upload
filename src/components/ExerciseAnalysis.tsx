@@ -88,6 +88,7 @@ interface AnalysisData {
 
 interface ExerciseAnalysisProps {
   analysisData: AnalysisData;
+  exercise: string | null;
 }
 
 const ScoreCard = ({
@@ -211,7 +212,7 @@ const Chart: React.FC<ChartProps> = ({ title, data, dataKey, color, unit }) => (
     </div>
 );
 
-const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => {
+const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData, exercise }) => {
   const [showAngleCheckboxes, setShowAngleCheckboxes] = useState(true);
   const [showVelocityCheckboxes, setShowVelocityCheckboxes] = useState(false);
   const [showAccelerationCheckboxes, setShowAccelerationCheckboxes] = useState(false);
@@ -271,7 +272,7 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData }) => 
     <div className="space-y-8">
       <div className="text-center space-y-4">
         <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-blue-600 bg-clip-text text-transparent">
-          Exercise Analysis Results
+          {exercise} Analysis Results
         </h2>
         <p className="text-gray-400 max-w-2xl mx-auto">
           Comprehensive analysis of your exercise performance with detailed metrics and insights
