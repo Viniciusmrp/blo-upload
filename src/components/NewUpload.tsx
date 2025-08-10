@@ -97,6 +97,11 @@ interface AnalysisData {
   error?: string;
 }
 
+const exercises = {
+  "Lower Body": ["Back Squat", "Deadlift", "Romanian Deadlift", "Bulgarian Split Squat"],
+  "Upper Body": ["Pull-ups", "Pushups", "Bicep Curls", "Shoulder Press", "Lateral Raises"],
+};
+
 const NewUpload = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -115,6 +120,10 @@ const NewUpload = () => {
 
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   const [isPortrait, setIsPortrait] = useState(false);
+
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
+
 
   useEffect(() => {
     if (!selectedFile) {
@@ -198,7 +207,7 @@ const NewUpload = () => {
 
       await axios.post(
         "https://my-flask-app-service-309448793861.us-central1.run.app/save-video-info",
-        { email, weight, height, load, videoName: fileName, isPortrait }
+        { email, weight, height, load, videoName: fileName, isPortrait, exercise: selectedExercise }
       );
 
       const response = await axios.post(
@@ -239,6 +248,8 @@ const NewUpload = () => {
     setErrorMessage('');
     setProcessedVideoUrl(null);
     setAnalysisData(null);
+    setSelectedCategory(null);
+    setSelectedExercise(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -330,68 +341,105 @@ const NewUpload = () => {
                 <div className="flex flex-wrap justify-center items-start gap-8">
                     <div className="bg-gray-800 rounded-xl p-6 shadow-lg w-full max-w-lg">
                         <div className="space-y-6">
-                        <div className="text-center">
-                            <h2 className="text-xl font-semibold mb-2">Upload Your Exercise Video</h2>
-                            <p className="text-gray-400">Upload your video to analyze your form and technique</p>
-                        </div>
-                        <div
-                            className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-blue-400 transition-colors"
-                            onClick={handleButtonClick}
-                        >
-                            {!selectedFile ? (
-                            <>
-                                <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                                <p className="mt-4 text-sm text-gray-400">
-                                Click to upload or drag and drop your video
-                                </p>
-                            </>
-                            ) : (
-                            <div className="space-y-4">
-                                <CheckCircle className="mx-auto h-12 w-12 text-green-400" />
-                                <p className="text-sm text-gray-400">{selectedFile.name}</p>
+                        {!selectedCategory ? (
+                          <div className="space-y-4">
+                            <h3 className="text-lg font-semibold text-center">Select a Category</h3>
+                            <div className="grid grid-cols-2 gap-4">
+                              {Object.keys(exercises).map((category) => (
+                                <button
+                                  key={category}
+                                  onClick={() => setSelectedCategory(category)}
+                                  className="bg-gray-700 hover:bg-gray-600 rounded-lg p-4 text-white font-medium transition-colors"
+                                >
+                                  {category}
+                                </button>
+                              ))}
                             </div>
-                            )}
-                        </div>
-                        <input
-                            type="file"
-                            accept="video/*,video/quicktime,.mov,.qt"
-                            onChange={handleMediaSelected}
-                            ref={fileInputRef}
-                            className="hidden"
-                        />
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                            <label htmlFor="email" className="text-sm text-gray-400">Email</label>
+                          </div>
+                        ) : !selectedExercise ? (
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                              <h3 className="text-lg font-semibold">{selectedCategory}</h3>
+                              <button onClick={() => setSelectedCategory(null)} className="text-sm text-blue-400 hover:underline">Change Category</button>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              {exercises[selectedCategory as keyof typeof exercises].map((exercise) => (
+                                <button
+                                  key={exercise}
+                                  onClick={() => setSelectedExercise(exercise)}
+                                  className="bg-gray-700 hover:bg-gray-600 rounded-lg p-4 text-white font-medium transition-colors"
+                                >
+                                  {exercise}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-6">
+                            <div className="flex items-center justify-between">
+                              <h3 className="text-lg font-semibold">{selectedExercise}</h3>
+                              <button onClick={() => setSelectedExercise(null)} className="text-sm text-blue-400 hover:underline">Change Exercise</button>
+                            </div>
+                            <div
+                                className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-blue-400 transition-colors"
+                                onClick={handleButtonClick}
+                            >
+                                {!selectedFile ? (
+                                <>
+                                    <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                                    <p className="mt-4 text-sm text-gray-400">
+                                    Click to upload or drag and drop your video
+                                    </p>
+                                </>
+                                ) : (
+                                <div className="space-y-4">
+                                    <CheckCircle className="mx-auto h-12 w-12 text-green-400" />
+                                    <p className="text-sm text-gray-400">{selectedFile.name}</p>
+                                </div>
+                                )}
+                            </div>
                             <input
-                                id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                                className="w-full bg-gray-700 rounded-lg border border-gray-600 p-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                                type="file"
+                                accept="video/*,video/quicktime,.mov,.qt"
+                                onChange={handleMediaSelected}
+                                ref={fileInputRef}
+                                className="hidden"
                             />
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                <label htmlFor="email" className="text-sm text-gray-400">Email</label>
+                                <input
+                                    id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                                    className="w-full bg-gray-700 rounded-lg border border-gray-600 p-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                                />
+                                </div>
+                                <div className="space-y-2">
+                                <label htmlFor="weight" className="text-sm text-gray-400">Weight (kg)</label>
+                                <input
+                                    id="weight" type="text" value={weight} onChange={(e) => setWeight(e.target.value)}
+                                    className="w-full bg-gray-700 rounded-lg border border-gray-600 p-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                                />
+                                </div>
+                                <div className="space-y-2">
+                                <label htmlFor="height" className="text-sm text-gray-400">Height (cm)</label>
+                                <input
+                                    id="height" type="text" value={height} onChange={(e) => setHeight(e.target.value)}
+                                    className="w-full bg-gray-700 rounded-lg border border-gray-600 p-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                                />
+                                </div>
+                                <div className="space-y-2">
+                                <label htmlFor="load" className="text-sm text-gray-400">Load (kg)</label>
+                                <input
+                                    id="load" type="text" value={load} onChange={(e) => setLoad(e.target.value)}
+                                    className="w-full bg-gray-700 rounded-lg border border-gray-600 p-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                                />
+                                </div>
                             </div>
-                            <div className="space-y-2">
-                            <label htmlFor="weight" className="text-sm text-gray-400">Weight (kg)</label>
-                            <input
-                                id="weight" type="text" value={weight} onChange={(e) => setWeight(e.target.value)}
-                                className="w-full bg-gray-700 rounded-lg border border-gray-600 p-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                            />
-                            </div>
-                            <div className="space-y-2">
-                            <label htmlFor="height" className="text-sm text-gray-400">Height (cm)</label>
-                            <input
-                                id="height" type="text" value={height} onChange={(e) => setHeight(e.target.value)}
-                                className="w-full bg-gray-700 rounded-lg border border-gray-600 p-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                            />
-                            </div>
-                            <div className="space-y-2">
-                            <label htmlFor="load" className="text-sm text-gray-400">Load (kg)</label>
-                            <input
-                                id="load" type="text" value={load} onChange={(e) => setLoad(e.target.value)}
-                                className="w-full bg-gray-700 rounded-lg border border-gray-600 p-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                            />
-                            </div>
-                        </div>
+                          </div>
+                        )}
                         <button
                             onClick={handleSubmit}
-                            disabled={!selectedFile || uploadStatus === 'uploading' || uploadStatus === 'processing'}
+                            disabled={!selectedFile || !selectedExercise || uploadStatus === 'uploading' || uploadStatus === 'processing'}
                             className="w-full flex items-center justify-center bg-blue-500 hover:bg-blue-600 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg py-3 px-4 text-white font-medium transition-colors h-12"
                         >
                             {(uploadStatus === 'uploading' || uploadStatus === 'processing') ? (
