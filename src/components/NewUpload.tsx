@@ -302,7 +302,7 @@ const NewUpload = () => {
 
                 <div className="space-y-8">
                     {analysisData.status === 'success' ? (
-                        <ExerciseAnalysis analysisData={analysisData} exercise={selectedExercise} />
+                        <ExerciseAnalysis analysisData={analysisData} exercise={selectedExercise} category={selectedCategory} />
                     ) : (
                         <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
                             <div className="text-red-400 flex items-center gap-2">

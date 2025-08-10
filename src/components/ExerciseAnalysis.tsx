@@ -89,6 +89,7 @@ interface AnalysisData {
 interface ExerciseAnalysisProps {
   analysisData: AnalysisData;
   exercise: string | null;
+  category: string | null;
 }
 
 const ScoreCard = ({
@@ -212,7 +213,7 @@ const IndividualChart: React.FC<IndividualChartProps> = ({ title, data, dataKey,
     </div>
 );
 
-const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData, exercise }) => {
+const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData, exercise, category }) => {
   const [showAngleCheckboxes, setShowAngleCheckboxes] = useState(true);
 
   const { scores, reps, metrics, time_series_data, error } = analysisData;
@@ -233,21 +234,26 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData, exerc
     wrist: { name: "Wrist", color: "#A5B4FC" },
   };
 
+  const lowerBodyJoints = ['ankle', 'knee', 'hip'];
+  const upperBodyJoints = ['wrist', 'elbow', 'shoulder'];
+
+  const jointsToShow = category === 'Lower Body' ? lowerBodyJoints : upperBodyJoints;
+
   const bestSide = useMemo(() => {
     if (!kinematicsData.length) return 'left';
     let leftVisibility = 0;
     let rightVisibility = 0;
     kinematicsData.forEach(dataPoint => {
-      Object.keys(jointConfig).forEach(joint => {
+      jointsToShow.forEach(joint => {
         if (dataPoint[`left_${joint}_angle` as keyof TimeSeriesDataPoint] != null) leftVisibility++;
         if (dataPoint[`right_${joint}_angle` as keyof TimeSeriesDataPoint] != null) rightVisibility++;
       });
     });
     return rightVisibility > leftVisibility ? 'right' : 'left';
-  }, [kinematicsData, jointConfig]);
+  }, [kinematicsData, jointsToShow]);
 
   const [visibleAngles, setVisibleAngles] = useState<Record<string, boolean>>({
-    ankle: true, knee: true, hip: true, shoulder: true, elbow: true, wrist: false,
+    ankle: true, knee: true, hip: true, shoulder: true, elbow: true, wrist: true,
   });
 
   const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>, setVisible: React.Dispatch<React.SetStateAction<Record<string, boolean>>>) => {
@@ -268,8 +274,6 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData, exerc
       </div>
     );
   }
-
-  const jointKeys = Object.keys(jointConfig);
 
   return (
     <div className="space-y-8">
@@ -316,7 +320,7 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData, exerc
         </div>
         {showAngleCheckboxes && (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-4 gap-y-2 mb-6">
-            {jointKeys.map((key) => (
+            {jointsToShow.map((key) => (
               <label key={key} className="flex items-center space-x-2 text-sm text-gray-300 cursor-pointer">
                 <input type="checkbox" name={key} checked={visibleAngles[key]} onChange={(e) => handleCheckboxChange(e, setVisibleAngles)} className="form-checkbox h-4 w-4 rounded" style={{ accentColor: jointConfig[key as keyof typeof jointConfig].color }} />
                 <span style={{ color: jointConfig[key as keyof typeof jointConfig].color }}>{jointConfig[key as keyof typeof jointConfig].name}</span>
@@ -332,7 +336,7 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData, exerc
               <YAxis stroke="#9CA3AF" style={{ fontSize: '11px' }} unit="°" />
               <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '12px', color: '#F9FAFB' }} />
               <Legend />
-              {jointKeys.map((key) => visibleAngles[key] && (
+              {jointsToShow.map((key) => visibleAngles[key] && (
                 <Line key={`${bestSide}-${key}-angle`} type="natural" dataKey={`${bestSide}_${key}_angle`} stroke={jointConfig[key as keyof typeof jointConfig].color} name={`${jointConfig[key as keyof typeof jointConfig].name}`} dot={false} strokeWidth={2} />
               ))}
             </LineChart>
@@ -342,7 +346,7 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData, exerc
         
       {/* Velocity and Acceleration Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {jointKeys.map((key) => (
+        {jointsToShow.map((key) => (
           <IndividualChart
             key={`${key}-velocity`}
             title={`${jointConfig[key as keyof typeof jointConfig].name} Velocity`}
@@ -352,7 +356,7 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData, exerc
             unit="m/s"
           />
         ))}
-        {jointKeys.map((key) => (
+        {jointsToShow.map((key) => (
           <IndividualChart
             key={`${key}-acceleration`}
             title={`${jointConfig[key as keyof typeof jointConfig].name} Acceleration`}
