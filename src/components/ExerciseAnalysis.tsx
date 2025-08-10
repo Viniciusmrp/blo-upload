@@ -199,7 +199,7 @@ const IndividualChart: React.FC<IndividualChartProps> = ({ title, data, dataKey,
             />
             <Legend />
             <Line
-              type="monotone"
+              type="natural"
               dataKey={dataKey}
               stroke={color}
               name={title}
@@ -333,7 +333,7 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData, exerc
               <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '12px', color: '#F9FAFB' }} />
               <Legend />
               {jointKeys.map((key) => visibleAngles[key] && (
-                <Line key={`${bestSide}-${key}-angle`} type="monotone" dataKey={`${bestSide}_${key}_angle`} stroke={jointConfig[key as keyof typeof jointConfig].color} name={`${jointConfig[key as keyof typeof jointConfig].name}`} dot={false} strokeWidth={2} />
+                <Line key={`${bestSide}-${key}-angle`} type="natural" dataKey={`${bestSide}_${key}_angle`} stroke={jointConfig[key as keyof typeof jointConfig].color} name={`${jointConfig[key as keyof typeof jointConfig].name}`} dot={false} strokeWidth={2} />
               ))}
             </LineChart>
           </ResponsiveContainer>
@@ -349,7 +349,7 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData, exerc
             data={kinematicsData}
             dataKey={`${bestSide}_${key}_velocity`}
             color={jointConfig[key as keyof typeof jointConfig].color}
-            unit="°/s"
+            unit="m/s"
           />
         ))}
         {jointKeys.map((key) => (
@@ -359,7 +359,7 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData, exerc
             data={kinematicsData}
             dataKey={`${bestSide}_${key}_acceleration`}
             color={jointConfig[key as keyof typeof jointConfig].color}
-            unit="°/s²"
+            unit="m/s²"
           />
         ))}
       </div>
