@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useMemo } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Award, Zap, Clock, BarChart, AlertCircle, Activity, ChevronDown, ChevronUp } from 'lucide-react';
 
 // Updated interfaces to match the new JSON structure
@@ -155,7 +155,7 @@ const ScoreCard = ({
   );
 };
 
-interface ChartProps {
+interface IndividualChartProps {
     title: string;
     data: any[];
     dataKey: string;
@@ -163,7 +163,7 @@ interface ChartProps {
     unit: string;
 }
 
-const Chart: React.FC<ChartProps> = ({ title, data, dataKey, color, unit }) => (
+const IndividualChart: React.FC<IndividualChartProps> = ({ title, data, dataKey, color, unit }) => (
     <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50">
       <div className="flex items-center gap-3 mb-6">
         <div className={`p-2 bg-gray-700 rounded-lg`}>
@@ -214,8 +214,6 @@ const Chart: React.FC<ChartProps> = ({ title, data, dataKey, color, unit }) => (
 
 const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData, exercise }) => {
   const [showAngleCheckboxes, setShowAngleCheckboxes] = useState(true);
-  const [showVelocityCheckboxes, setShowVelocityCheckboxes] = useState(false);
-  const [showAccelerationCheckboxes, setShowAccelerationCheckboxes] = useState(false);
 
   const { scores, reps, metrics, time_series_data, error } = analysisData;
 
@@ -235,16 +233,21 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData, exerc
     wrist: { name: "Wrist", color: "#A5B4FC" },
   };
 
+  const bestSide = useMemo(() => {
+    if (!kinematicsData.length) return 'left';
+    let leftVisibility = 0;
+    let rightVisibility = 0;
+    kinematicsData.forEach(dataPoint => {
+      Object.keys(jointConfig).forEach(joint => {
+        if (dataPoint[`left_${joint}_angle` as keyof TimeSeriesDataPoint] != null) leftVisibility++;
+        if (dataPoint[`right_${joint}_angle` as keyof TimeSeriesDataPoint] != null) rightVisibility++;
+      });
+    });
+    return rightVisibility > leftVisibility ? 'right' : 'left';
+  }, [kinematicsData, jointConfig]);
+
   const [visibleAngles, setVisibleAngles] = useState<Record<string, boolean>>({
     ankle: true, knee: true, hip: true, shoulder: true, elbow: true, wrist: false,
-  });
-
-  const [visibleVelocities, setVisibleVelocities] = useState<Record<string, boolean>>({
-    ankle: false, knee: true, hip: true, shoulder: false, elbow: false, wrist: false,
-  });
-
-  const [visibleAccelerations, setVisibleAccelerations] = useState<Record<string, boolean>>({
-    ankle: false, knee: true, hip: true, shoulder: false, elbow: false, wrist: false,
   });
 
   const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>, setVisible: React.Dispatch<React.SetStateAction<Record<string, boolean>>>) => {
@@ -306,7 +309,7 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData, exerc
       {/* Angle Chart */}
       <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-white">Joint Angle Analysis</h3>
+          <h3 className="text-lg font-semibold text-white">Joint Angle Analysis ({bestSide})</h3>
           <button onClick={() => setShowAngleCheckboxes(!showAngleCheckboxes)} className="text-gray-400 hover:text-white">
             {showAngleCheckboxes ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
           </button>
@@ -330,88 +333,35 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData, exerc
               <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '12px', color: '#F9FAFB' }} />
               <Legend />
               {jointKeys.map((key) => visibleAngles[key] && (
-                <Line key={`left-${key}-angle`} type="monotone" dataKey={`left_${key}_angle`} stroke={jointConfig[key as keyof typeof jointConfig].color} name={`Left ${jointConfig[key as keyof typeof jointConfig].name}`} dot={false} strokeWidth={2} />
-              ))}
-              {jointKeys.map((key) => visibleAngles[key] && (
-                <Line key={`right-${key}-angle`} type="monotone" dataKey={`right_${key}_angle`} stroke={jointConfig[key as keyof typeof jointConfig].color} name={`Right ${jointConfig[key as keyof typeof jointConfig].name}`} dot={false} strokeWidth={2} strokeDasharray="5 5"/>
+                <Line key={`${bestSide}-${key}-angle`} type="monotone" dataKey={`${bestSide}_${key}_angle`} stroke={jointConfig[key as keyof typeof jointConfig].color} name={`${jointConfig[key as keyof typeof jointConfig].name}`} dot={false} strokeWidth={2} />
               ))}
             </LineChart>
           </ResponsiveContainer>
         </div>
       </div>
         
-      {/* Velocity Chart */}
-      <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-white">Joint Velocity Analysis</h3>
-          <button onClick={() => setShowVelocityCheckboxes(!showVelocityCheckboxes)} className="text-gray-400 hover:text-white">
-            {showVelocityCheckboxes ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-          </button>
-        </div>
-        {showVelocityCheckboxes && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-4 gap-y-2 mb-6">
-            {jointKeys.map((key) => (
-              <label key={key} className="flex items-center space-x-2 text-sm text-gray-300 cursor-pointer">
-                <input type="checkbox" name={key} checked={visibleVelocities[key]} onChange={(e) => handleCheckboxChange(e, setVisibleVelocities)} className="form-checkbox h-4 w-4 rounded" style={{ accentColor: jointConfig[key as keyof typeof jointConfig].color }} />
-                <span style={{ color: jointConfig[key as keyof typeof jointConfig].color }}>{jointConfig[key as keyof typeof jointConfig].name}</span>
-              </label>
-            ))}
-          </div>
-        )}
-        <div className="h-[400px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={kinematicsData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
-              <XAxis dataKey="time" type="number" stroke="#9CA3AF" style={{ fontSize: '11px' }} domain={['dataMin', 'dataMax']} unit="s" />
-              <YAxis stroke="#9CA3AF" style={{ fontSize: '11px' }} unit="°/s" />
-              <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '12px', color: '#F9FAFB' }} />
-              <Legend />
-              {jointKeys.map((key) => visibleVelocities[key] && (
-                <Line key={`left-${key}-velocity`} type="monotone" dataKey={`left_${key}_velocity`} stroke={jointConfig[key as keyof typeof jointConfig].color} name={`Left ${jointConfig[key as keyof typeof jointConfig].name}`} dot={false} strokeWidth={2} />
-              ))}
-                {jointKeys.map((key) => visibleVelocities[key] && (
-                <Line key={`right-${key}-velocity`} type="monotone" dataKey={`right_${key}_velocity`} stroke={jointConfig[key as keyof typeof jointConfig].color} name={`Right ${jointConfig[key as keyof typeof jointConfig].name}`} dot={false} strokeWidth={2} strokeDasharray="5 5"/>
-              ))}
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-        
-      {/* Acceleration Chart */}
-      <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-white">Joint Acceleration Analysis</h3>
-          <button onClick={() => setShowAccelerationCheckboxes(!showAccelerationCheckboxes)} className="text-gray-400 hover:text-white">
-            {showAccelerationCheckboxes ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-          </button>
-        </div>
-        {showAccelerationCheckboxes && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-4 gap-y-2 mb-6">
-            {jointKeys.map((key) => (
-              <label key={key} className="flex items-center space-x-2 text-sm text-gray-300 cursor-pointer">
-                <input type="checkbox" name={key} checked={visibleAccelerations[key]} onChange={(e) => handleCheckboxChange(e, setVisibleAccelerations)} className="form-checkbox h-4 w-4 rounded" style={{ accentColor: jointConfig[key as keyof typeof jointConfig].color }} />
-                <span style={{ color: jointConfig[key as keyof typeof jointConfig].color }}>{jointConfig[key as keyof typeof jointConfig].name}</span>
-              </label>
-            ))}
-          </div>
-        )}
-        <div className="h-[400px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={kinematicsData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
-              <XAxis dataKey="time" type="number" stroke="#9CA3AF" style={{ fontSize: '11px' }} domain={['dataMin', 'dataMax']} unit="s" />
-              <YAxis stroke="#9CA3AF" style={{ fontSize: '11px' }} unit="°/s²" />
-              <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '12px', color: '#F9FAFB' }} />
-              <Legend />
-              {jointKeys.map((key) => visibleAccelerations[key] && (
-                <Line key={`left-${key}-acceleration`} type="monotone" dataKey={`left_${key}_acceleration`} stroke={jointConfig[key as keyof typeof jointConfig].color} name={`Left ${jointConfig[key as keyof typeof jointConfig].name}`} dot={false} strokeWidth={2} />
-              ))}
-              {jointKeys.map((key) => visibleAccelerations[key] && (
-                <Line key={`right-${key}-acceleration`} type="monotone" dataKey={`right_${key}_acceleration`} stroke={jointConfig[key as keyof typeof jointConfig].color} name={`Right ${jointConfig[key as keyof typeof jointConfig].name}`} dot={false} strokeWidth={2} strokeDasharray="5 5"/>
-              ))}
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+      {/* Velocity and Acceleration Charts */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {jointKeys.map((key) => (
+          <IndividualChart
+            key={`${key}-velocity`}
+            title={`${jointConfig[key as keyof typeof jointConfig].name} Velocity`}
+            data={kinematicsData}
+            dataKey={`${bestSide}_${key}_velocity`}
+            color={jointConfig[key as keyof typeof jointConfig].color}
+            unit="°/s"
+          />
+        ))}
+        {jointKeys.map((key) => (
+          <IndividualChart
+            key={`${key}-acceleration`}
+            title={`${jointConfig[key as keyof typeof jointConfig].name} Acceleration`}
+            data={kinematicsData}
+            dataKey={`${bestSide}_${key}_acceleration`}
+            color={jointConfig[key as keyof typeof jointConfig].color}
+            unit="°/s²"
+          />
+        ))}
       </div>
     </div>
   );
