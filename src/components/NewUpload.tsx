@@ -13,6 +13,7 @@ import axios from "axios";
 import { Oval } from "react-loader-spinner";
 import { CheckCircle, Upload, RefreshCw, AlertCircle } from "lucide-react";
 import { generateVideoId } from "../utils/generateVideoId";
+import { useAuth } from '@/context/AuthContext';
 
 // Updated interfaces to match the new JSON structure
 interface Scores {
@@ -107,9 +108,6 @@ const NewUpload = () => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'processing' | 'complete' | 'error'>('idle');
-  const [email, setEmail] = useState("");
-  const [weight, setWeight] = useState("");
-  const [height, setHeight] = useState("");
   const [load, setLoad] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [processedVideoUrl, setProcessedVideoUrl] = useState<string | null>(null);
@@ -117,6 +115,7 @@ const NewUpload = () => {
   const [isPending, startTransition] = useTransition();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pollInterval = useRef<NodeJS.Timeout>();
+  const { currentUser, userData } = useAuth();
 
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   const [isPortrait, setIsPortrait] = useState(false);
@@ -194,8 +193,8 @@ const NewUpload = () => {
     setAnalysisData(null);
     setProcessedVideoUrl(null);
 
-    if (!selectedFile) {
-      setErrorMessage('No file selected.');
+    if (!selectedFile || !currentUser || !userData) {
+      setErrorMessage('No file selected or user not logged in.');
       setUploadStatus('idle');
       return;
     }
@@ -207,7 +206,16 @@ const NewUpload = () => {
 
       await axios.post(
         "https://my-flask-app-service-309448793861.us-central1.run.app/save-video-info",
-        { email, weight, height, load, videoName: fileName, isPortrait, exercise: selectedExercise }
+        { 
+          uid: currentUser.uid, 
+          email: currentUser.email, 
+          weight: userData.weight, 
+          height: userData.height, 
+          load, 
+          videoName: fileName, 
+          isPortrait, 
+          exercise: selectedExercise 
+        }
       );
 
       const response = await axios.post(
@@ -241,9 +249,6 @@ const NewUpload = () => {
     setPreviewUrl(null);
     setUploadProgress(0);
     setUploadStatus('idle');
-    setEmail("");
-    setWeight("");
-    setHeight("");
     setLoad("");
     setErrorMessage('');
     setProcessedVideoUrl(null);
@@ -405,35 +410,12 @@ const NewUpload = () => {
                                 ref={fileInputRef}
                                 className="hidden"
                             />
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                <label htmlFor="email" className="text-sm text-gray-400">Email</label>
-                                <input
-                                    id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full bg-gray-700 rounded-lg border border-gray-600 p-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                                />
-                                </div>
-                                <div className="space-y-2">
-                                <label htmlFor="weight" className="text-sm text-gray-400">Weight (kg)</label>
-                                <input
-                                    id="weight" type="text" value={weight} onChange={(e) => setWeight(e.target.value)}
-                                    className="w-full bg-gray-700 rounded-lg border border-gray-600 p-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                                />
-                                </div>
-                                <div className="space-y-2">
-                                <label htmlFor="height" className="text-sm text-gray-400">Height (cm)</label>
-                                <input
-                                    id="height" type="text" value={height} onChange={(e) => setHeight(e.target.value)}
-                                    className="w-full bg-gray-700 rounded-lg border border-gray-600 p-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                                />
-                                </div>
-                                <div className="space-y-2">
-                                <label htmlFor="load" className="text-sm text-gray-400">Load (kg)</label>
-                                <input
-                                    id="load" type="text" value={load} onChange={(e) => setLoad(e.target.value)}
-                                    className="w-full bg-gray-700 rounded-lg border border-gray-600 p-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                                />
-                                </div>
+                            <div className="space-y-2">
+                              <label htmlFor="load" className="text-sm text-gray-400">Load (kg)</label>
+                              <input
+                                  id="load" type="text" value={load} onChange={(e) => setLoad(e.target.value)}
+                                  className="w-full bg-gray-700 rounded-lg border border-gray-600 p-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                              />
                             </div>
                           </div>
                         )}
