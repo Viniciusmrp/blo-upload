@@ -6,7 +6,8 @@ import { Award, Zap, Clock, BarChart, AlertCircle, Activity, ChevronDown, Chevro
 // Updated interfaces to match the new JSON structure
 interface Scores {
   overall: number;
-  intensity: number;
+  concentric_intensity: number;
+  eccentric_intensity: number;
   tut: number;
   volume: number;
 }
@@ -26,8 +27,7 @@ interface Metrics {
   time_under_tension: number;
   time_efficiency: number;
   total_volume: TotalVolume;
-  max_intensity: number;
-  avg_intensity: number;
+  total_intensity: number;
 }
 
 interface TimeSeriesDataPoint {
@@ -286,13 +286,14 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData, exerc
         </p>
         <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto rounded-full"></div>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <ScoreCard icon={Award} title="Overall Score" score={scores.overall} unit="/100" colorClass="text-blue-400" gradientFrom="from-blue-500" gradientTo="to-blue-600" />
-        <ScoreCard icon={Zap} title="Intensity Score" score={scores.intensity} unit="/100" colorClass="text-red-400" gradientFrom="from-red-500" gradientTo="to-red-600" />
+        <ScoreCard icon={Zap} title="Concentric Intensity" score={scores.concentric_intensity} unit="/100" colorClass="text-red-400" gradientFrom="from-red-500" gradientTo="to-red-600" />
+        <ScoreCard icon={Zap} title="Eccentric Intensity" score={scores.eccentric_intensity} unit="/100" colorClass="text-purple-400" gradientFrom="from-purple-500" gradientTo="to-purple-600" />
         <ScoreCard icon={Clock} title="TUT Score" score={scores.tut} unit="/100" secondaryValue={metrics.time_under_tension} secondaryUnit="s" colorClass="text-yellow-400" gradientFrom="from-yellow-500" gradientTo="to-yellow-600" />
         <ScoreCard icon={BarChart} title="Volume Score" score={scores.volume} unit="/100" secondaryValue={metrics.total_volume.value} secondaryUnit={metrics.total_volume.unit} colorClass="text-green-400" gradientFrom="from-green-500" gradientTo="to-green-600" />
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50 text-center group hover:shadow-2xl transition-all duration-300">
           <div className="p-3 bg-purple-500/20 rounded-lg w-fit mx-auto mb-3 group-hover:bg-purple-500/30 transition-colors"><Activity className="h-8 w-8 text-purple-400" /></div>
           <p className="text-3xl font-bold text-white mb-1">{reps.total}</p>
@@ -307,6 +308,11 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData, exerc
           <div className="p-3 bg-orange-500/20 rounded-lg w-fit mx-auto mb-3 group-hover:bg-orange-500/30 transition-colors"><Zap className="h-8 w-8 text-orange-400" /></div>
           <p className="text-3xl font-bold text-white mb-1">{metrics.time_efficiency.toFixed(1)}%</p>
           <p className="text-sm text-gray-400">Time Efficiency</p>
+        </div>
+        <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border border-gray-700/50 text-center group hover:shadow-2xl transition-all duration-300">
+          <div className="p-3 bg-teal-500/20 rounded-lg w-fit mx-auto mb-3 group-hover:bg-teal-500/30 transition-colors"><Zap className="h-8 w-8 text-teal-400" /></div>
+          <p className="text-3xl font-bold text-white mb-1">{metrics.total_intensity.toFixed(1)}</p>
+          <p className="text-sm text-gray-400">Total Intensity</p>
         </div>
       </div>
       
