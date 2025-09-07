@@ -18,7 +18,8 @@ import { useAuth } from '@/context/AuthContext';
 // Updated interfaces to match the new JSON structure
 interface Scores {
   overall: number;
-  intensity: number;
+  concentric_intensity: number;
+  eccentric_intensity: number;
   tut: number;
   volume: number;
 }
@@ -26,7 +27,7 @@ interface Scores {
 interface Reps {
   total: number;
   avg_duration: number;
-  details: any[]; // Kept as any for simplicity, but you can define a more specific type
+  details: any[];
 }
 
 interface TotalVolume {
@@ -38,8 +39,7 @@ interface Metrics {
   time_under_tension: number;
   time_efficiency: number;
   total_volume: TotalVolume;
-  max_intensity: number;
-  avg_intensity: number;
+  total_intensity: number;
 }
 
 interface TimeSeriesDataPoint {
