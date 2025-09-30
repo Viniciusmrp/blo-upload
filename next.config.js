@@ -1,8 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    appDir: true,
-  },
   // ADD THIS WEBPACK CONFIG
   webpack: (config, { isServer }) => {
     if (!isServer) {
