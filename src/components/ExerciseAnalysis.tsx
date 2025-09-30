@@ -82,18 +82,18 @@ const MetricCard = ({
   gradientFrom: string;
   gradientTo: string;
 }) => (
-  <div className={`bg-gradient-to-br ${gradientFrom} ${gradientTo} rounded-xl p-4 shadow-lg border border-gray-700/50 text-white`}>
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-      <div className="flex items-center gap-3">
-        <Icon className={`${colorClass} h-6 w-6`} />
-        <p className="text-md font-semibold text-center sm:text-left">{title}</p>
-      </div>
-      <p className="text-2xl font-bold">
-        {value}
-        {unit && <span className="text-sm text-gray-300 ml-1">{unit}</span>}
-      </p>
+  <div className={`bg-gradient-to-br ${gradientFrom} ${gradientTo} rounded-xl p-4 shadow-lg border border-gray-700/50 text-white flex items-center justify-between`}>
+    <div className="flex items-center gap-3 min-w-0">
+        <Icon className={`${colorClass} h-6 w-6 flex-shrink-0`} />
+        <p className="text-md font-semibold truncate">{title}</p>
     </div>
-  </div>
+    <div className="text-right">
+        <p className="text-xl sm:text-2xl font-bold whitespace-nowrap">
+            {value}
+            {unit && <span className="text-xs sm:text-sm text-gray-300 ml-0.5">{unit}</span>}
+        </p>
+    </div>
+</div>
 );
 
 const RepChart = ({ data, dataKey, title, color, unit }: { data: any[]; dataKey: string; title: string; color: string; unit: string; }) => (
