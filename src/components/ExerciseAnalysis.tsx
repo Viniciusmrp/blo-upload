@@ -82,11 +82,11 @@ const MetricCard = ({
   gradientFrom: string;
   gradientTo: string;
 }) => (
-  <div className={`bg-gradient-to-br ${gradientFrom} ${gradientTo} rounded-xl p-6 shadow-lg border border-gray-700/50 text-white`}>
-    <div className="flex items-center justify-between">
+  <div className={`bg-gradient-to-br ${gradientFrom} ${gradientTo} rounded-xl p-4 shadow-lg border border-gray-700/50 text-white`}>
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
       <div className="flex items-center gap-3">
         <Icon className={`${colorClass} h-6 w-6`} />
-        <p className="text-md font-semibold">{title}</p>
+        <p className="text-md font-semibold text-center sm:text-left">{title}</p>
       </div>
       <p className="text-2xl font-bold">
         {value}
@@ -188,7 +188,7 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData, exerc
       </div>
 
       {/* Metrics Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard icon={TrendingUp} title="Total Volume" value={metrics.total_volume.value.toFixed(2)} unit={metrics.total_volume.unit} colorClass="text-green-400" gradientFrom="from-gray-800" gradientTo="to-gray-900" />
         <MetricCard icon={Zap} title="Max Power" value={metrics.max_power.value.toFixed(2)} unit={metrics.max_power.unit} colorClass="text-red-400" gradientFrom="from-gray-800" gradientTo="to-gray-900" />
         <MetricCard icon={Clock} title="Time Efficiency" value={`${metrics.time_efficiency.toFixed(2)}%`} colorClass="text-yellow-400" gradientFrom="from-gray-800" gradientTo="to-gray-900" />
