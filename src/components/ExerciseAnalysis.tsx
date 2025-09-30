@@ -120,15 +120,16 @@ const RepChart = ({ data, dataKey, title, color, unit }: { data: any[]; dataKey:
 
 const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData, exercise, category }) => {
   const [showAngleCheckboxes, setShowAngleCheckboxes] = useState(true);
+  const [visibleAngles, setVisibleAngles] = useState<Record<string, boolean>>({
+    ankle: true, knee: true, hip: true, shoulder: true, elbow: true, wrist: true,
+  });
 
-  if (analysisData.status !== 'success' || !analysisData.metrics || !analysisData.reps || !analysisData.scores || !analysisData.time_series_data) {
-    // Handle error or loading state
-    return <div>Analysis data is incomplete or in an error state.</div>;
-  }
-  
-  const { metrics, reps, scores, time_series_data } = analysisData;
-
-  const kinematicsData = useMemo(() => time_series_data.kinematics, [time_series_data]);
+  const kinematicsData = useMemo(() => {
+    if (analysisData.status !== 'success' || !analysisData.time_series_data?.kinematics) {
+      return [];
+    }
+    return analysisData.time_series_data.kinematics;
+  }, [analysisData]);
 
   const jointConfig = {
     ankle: { name: "Ankle", color: "#A78BFA" },
@@ -142,7 +143,7 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData, exerc
   const lowerBodyJoints = ['ankle', 'knee', 'hip'];
   const upperBodyJoints = ['wrist', 'elbow', 'shoulder'];
   const jointsToShow = category === 'Lower Body' ? lowerBodyJoints : upperBodyJoints;
-  
+
   const bestSide = useMemo(() => {
     if (!kinematicsData.length) return 'left';
     let leftVisibility = 0;
@@ -156,10 +157,12 @@ const ExerciseAnalysis: React.FC<ExerciseAnalysisProps> = ({ analysisData, exerc
     return rightVisibility > leftVisibility ? 'right' : 'left';
   }, [kinematicsData, jointsToShow]);
 
-
-  const [visibleAngles, setVisibleAngles] = useState<Record<string, boolean>>({
-    ankle: true, knee: true, hip: true, shoulder: true, elbow: true, wrist: true,
-  });
+  if (analysisData.status !== 'success' || !analysisData.metrics || !analysisData.reps || !analysisData.scores) {
+    // Handle error or loading state
+    return <div>Analysis data is incomplete or in an error state.</div>;
+  }
+  
+  const { metrics, reps, scores } = analysisData;
 
   const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = event.target;
