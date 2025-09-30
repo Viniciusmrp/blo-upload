@@ -16,73 +16,45 @@ import { generateVideoId } from "../utils/generateVideoId";
 import { useAuth } from '@/context/AuthContext';
 
 // Updated interfaces to match the new JSON structure
-interface Scores {
-  overall: number;
-  concentric_intensity: number;
-  eccentric_intensity: number;
-  tut: number;
-  volume: number;
-}
-
-interface Reps {
-  total: number;
-  avg_duration: number;
-  details: any[];
-}
-
-interface TotalVolume {
-  value: number;
+interface MetricValue {
   unit: string;
+  value: number;
 }
 
 interface Metrics {
-  time_under_tension: number;
+  avg_concentric_power: MetricValue;
+  max_power: MetricValue;
   time_efficiency: number;
-  total_volume: TotalVolume;
-  total_intensity: number;
+  time_under_tension: number;
+  total_volume: MetricValue;
+  tut_concentric: number;
+  tut_eccentric: number;
+}
+
+interface RepDetail {
+  duration: number;
+  end_frame: number;
+  end_time: number;
+  rep_number: number;
+  start_frame: number;
+  start_time: number;
+  steadiness_score: number;
+  volume?: number;
+}
+
+interface Reps {
+  avg_duration: number;
+  details: RepDetail[];
+  total: number;
+}
+
+interface Scores {
+  eccentric_steadiness: number;
 }
 
 interface TimeSeriesDataPoint {
   time: number;
-  left_ankle_angle: number;
-  left_ankle_velocity: number;
-  left_ankle_acceleration: number;
-  right_ankle_angle: number;
-  right_ankle_velocity: number;
-  right_ankle_acceleration: number;
-  left_knee_angle: number;
-  left_knee_velocity: number;
-  left_knee_acceleration: number;
-  right_knee_angle: number;
-  right_knee_velocity: number;
-  right_knee_acceleration: number;
-  left_hip_angle: number;
-  left_hip_velocity: number;
-  left_hip_acceleration: number;
-  right_hip_angle: number;
-  right_hip_velocity: number;
-  right_hip_acceleration: number;
-  left_shoulder_angle: number;
-  left_shoulder_velocity: number;
-  left_shoulder_acceleration: number;
-  right_shoulder_angle: number;
-  right_shoulder_velocity: number;
-  right_shoulder_acceleration: number;
-  left_elbow_angle: number;
-  left_elbow_velocity: number;
-  left_elbow_acceleration: number;
-  right_elbow_angle: number;
-  right_elbow_velocity: number;
-  right_elbow_acceleration: number;
-  left_wrist_angle: number;
-  left_wrist_velocity: number;
-  left_wrist_acceleration: number;
-  right_wrist_angle: number;
-  right_wrist_velocity: number;
-  right_wrist_acceleration: number;
-  hip_height: number;
-  hip_velocity: number;
-  hip_acceleration: number;
+  [key: string]: any;
 }
 
 interface TimeSeriesData {
@@ -91,9 +63,9 @@ interface TimeSeriesData {
 
 interface AnalysisData {
   status: 'success' | 'error';
-  scores?: Scores;
-  reps?: Reps;
   metrics?: Metrics;
+  reps?: Reps;
+  scores?: Scores;
   time_series_data?: TimeSeriesData;
   error?: string;
 }
