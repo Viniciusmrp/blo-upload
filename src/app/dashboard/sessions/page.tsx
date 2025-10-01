@@ -29,7 +29,7 @@ const SessionsPage = () => {
       }
 
       try {
-        const fetchedSessions = await api.getUserVideos(currentUser.email!);
+        const fetchedSessions = await api.getUserVideos();
         if (fetchedSessions) {
           setSessions(fetchedSessions);
         }

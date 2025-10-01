@@ -1,11 +1,9 @@
-import axios from 'axios';
-
-const BASE_URL = 'https://my-flask-app-service-309448793861.us-central1.run.app';
+import apiClient from './apiClient';
 
 export const api = {
   checkVideoStatus: async (videoName: string) => {
     try {
-      const response = await axios.get(`${BASE_URL}/video-status/${videoName}`);
+      const response = await apiClient.get(`/video-status/${videoName}`);
       return response.data;
     } catch (error) {
       console.error('Error checking video status:', error);
@@ -15,7 +13,7 @@ export const api = {
 
   getExerciseAnalysis: async (videoId: string) => {
     try {
-      const response = await axios.get(`${BASE_URL}/exercise-analysis/${videoId}`);
+      const response = await apiClient.get(`/exercise-analysis/${videoId}`);
       return response.data;
     } catch (error) {
       console.error('Error getting exercise analysis:', error);
@@ -25,7 +23,7 @@ export const api = {
 
   saveVideoInfo: async (data: any) => {
     try {
-      const response = await axios.post(`${BASE_URL}/save-video-info`, data);
+      const response = await apiClient.post(`/save-video-info`, data);
       return response.data;
     } catch (error) {
       console.error('Error saving video info:', error);
@@ -35,7 +33,7 @@ export const api = {
 
   getSignedUrl: async (fileName: string) => {
     try {
-      const response = await axios.post(`${BASE_URL}/generate-signed-url`, { file_name: fileName });
+      const response = await apiClient.post(`/generate-signed-url`, { file_name: fileName });
       return response.data;
     } catch (error) {
       console.error('Error getting signed URL:', error);
@@ -43,9 +41,9 @@ export const api = {
     }
   },
 
-  getUserVideos: async (email: string) => {
+  getUserVideos: async () => {
     try {
-      const response = await axios.get(`${BASE_URL}/get-user-videos?email=${email}`);
+      const response = await apiClient.get(`/get-user-videos`);
       return response.data;
     } catch (error) {
       console.error('Error getting user videos:', error);

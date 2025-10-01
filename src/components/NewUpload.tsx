@@ -14,6 +14,7 @@ import { Oval } from "react-loader-spinner";
 import { CheckCircle, Upload, RefreshCw, AlertCircle } from "lucide-react";
 import { generateVideoId } from "../utils/generateVideoId";
 import { useAuth } from '@/context/AuthContext';
+import { api } from '../utils/api';
 
 // Updated interfaces to match the new JSON structure
 interface MetricValue {
@@ -120,23 +121,19 @@ const NewUpload = () => {
     setUploadStatus('processing');
     const checkStatus = async () => {
       try {
-        const response = await axios.get(
-          `https://my-flask-app-service-309448793861.us-central1.run.app/video-status/${videoName}`
-        );
-        if (response.data.status === 'complete') {
+        const response = await api.checkVideoStatus(videoName);
+        if (response.status === 'complete') {
           setUploadStatus('complete');
-          setProcessedVideoUrl(response.data.processed_url);
+          setProcessedVideoUrl(response.processed_url);
           clearInterval(pollInterval.current);
           const videoId = videoName.split('.')[0];
           try {
-            const analysisResponse = await axios.get(
-              `https://my-flask-app-service-309448793861.us-central1.run.app/exercise-analysis/${videoId}`
-            );
-            console.log('RAW Backend Analysis Response:', JSON.stringify(analysisResponse.data, null, 2));
+            const analysisResponse = await api.getExerciseAnalysis(videoId);
+            console.log('RAW Backend Analysis Response:', JSON.stringify(analysisResponse, null, 2));
 
             // Assuming the backend sends a status property in the root of the response
-            if (analysisResponse.data) {
-                setAnalysisData({ ...analysisResponse.data, status: 'success' });
+            if (analysisResponse) {
+                setAnalysisData({ ...analysisResponse, status: 'success' });
             } else {
               setAnalysisData({ status: 'error', error: 'Analysis did not complete successfully.' });
             }
@@ -144,7 +141,7 @@ const NewUpload = () => {
           } catch (error) {
             setAnalysisData({ status: 'error', error: 'Failed to fetch or process analysis data.' });
           }
-        } else if (response.data.status === 'error') {
+        } else if (response.status === 'error') {
           setUploadStatus('error');
           setErrorMessage('Video processing failed on the server.');
           clearInterval(pollInterval.current);
@@ -176,11 +173,8 @@ const NewUpload = () => {
       const originalFileExtension = selectedFile.name.split('.').pop() || 'mp4';
       const fileName = `${uniqueId}.${originalFileExtension}`;
 
-      await axios.post(
-        "https://my-flask-app-service-309448793861.us-central1.run.app/save-video-info",
+      await api.saveVideoInfo(
         { 
-          uid: currentUser.uid, 
-          email: currentUser.email, 
           weight: userData.weight, 
           height: userData.height, 
           load, 
@@ -190,11 +184,8 @@ const NewUpload = () => {
         }
       );
 
-      const response = await axios.post(
-        "https://my-flask-app-service-309448793861.us-central1.run.app/generate-signed-url",
-        { file_name: fileName, content_type: selectedFile.type }
-      );
-      const signedUrl = response.data.url;
+      const response = await api.getSignedUrl(fileName);
+      const signedUrl = response.url;
 
       await axios.put(signedUrl, selectedFile, {
         headers: { "Content-Type": selectedFile.type },
