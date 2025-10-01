@@ -41,5 +41,15 @@ export const api = {
       console.error('Error getting signed URL:', error);
       return null;
     }
+  },
+
+  getUserVideos: async (email: string) => {
+    try {
+      const response = await axios.get(`${BASE_URL}/get-user-videos?email=${email}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error getting user videos:', error);
+      return null;
+    }
   }
-}; 
+};
