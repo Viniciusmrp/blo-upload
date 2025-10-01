@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useMemo } from 'react';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Award, Zap, Clock, Activity, ChevronDown, ChevronUp, TrendingUp, Anchor, Move } from 'lucide-react';
+import { Award, Zap, Clock, ChevronDown, ChevronUp, TrendingUp, Anchor, Move } from 'lucide-react';
 
 // Updated interfaces to match the new JSON structure
 interface MetricValue {
@@ -82,18 +82,18 @@ const MetricCard = ({
   gradientFrom: string;
   gradientTo: string;
 }) => (
-  <div className={`bg-gradient-to-br ${gradientFrom} ${gradientTo} rounded-xl p-4 shadow-lg border border-gray-700/50 text-white flex items-center justify-between`}>
-    <div className="flex items-center gap-3 min-w-0">
-        <Icon className={`${colorClass} h-6 w-6 flex-shrink-0`} />
-        <p className="text-md font-semibold truncate">{title}</p>
+    <div className={`bg-gradient-to-br ${gradientFrom} ${gradientTo} rounded-xl p-5 shadow-lg border border-gray-700/50 text-white flex flex-col justify-between h-32`}>
+        <div className="flex items-center gap-2">
+            <Icon className={`${colorClass} h-5 w-5`} />
+            <p className="text-sm font-medium text-gray-300">{title}</p>
+        </div>
+        <div>
+            <p className="text-3xl font-bold text-white whitespace-nowrap overflow-x-auto overflow-y-hidden pb-1">
+                {value}
+                {unit && <span className="text-base font-medium text-gray-300 ml-1">{unit}</span>}
+            </p>
+        </div>
     </div>
-    <div className="text-right">
-        <p className="text-xl sm:text-2xl font-bold whitespace-nowrap">
-            {value}
-            {unit && <span className="text-xs sm:text-sm text-gray-300 ml-0.5">{unit}</span>}
-        </p>
-    </div>
-</div>
 );
 
 const RepChart = ({ data, dataKey, title, color, unit }: { data: any[]; dataKey: string; title: string; color: string; unit: string; }) => (
