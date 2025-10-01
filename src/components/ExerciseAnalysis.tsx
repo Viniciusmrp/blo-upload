@@ -85,7 +85,7 @@ const MetricCard = ({
     <div className={`bg-gradient-to-br ${gradientFrom} ${gradientTo} rounded-xl p-5 shadow-lg border border-gray-700/50 text-white flex flex-col justify-between h-32`}>
         <div className="flex items-center gap-2">
             <Icon className={`${colorClass} h-5 w-5`} />
-            <p className="text-sm font-medium text-gray-300">{title}</p>
+            <p className="text-base font-medium text-gray-300">{title}</p>
         </div>
         <div>
             <p className="text-3xl font-bold text-white whitespace-nowrap overflow-x-auto overflow-y-hidden pb-1">
