@@ -6,7 +6,7 @@ import { api } from '../../../utils/api';
 import { useRouter } from 'next/navigation';
 
 interface Session {
-  videoId: string; // Using videoId as the unique identifier
+  videoId?: string; // Using videoId as the unique identifier
   videoName: string;
   exercise: string;
   uploadedAt: string;
@@ -125,19 +125,22 @@ const SessionsPage = () => {
         <p className="text-gray-400">You have no saved sessions that match the filters.</p>
       ) : (
         <div className="flex flex-col gap-6">
-          {filteredAndSortedSessions.map((session) => (
-            <div key={session.videoId} className="bg-gray-800 rounded-lg shadow-lg p-6 cursor-pointer hover:bg-gray-700" onClick={() => handleVideoClick(session.videoId)}>
-              <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold text-blue-300 capitalize mb-2">{session.exercise}</h2>
-                <p className="text-sm text-gray-400 mb-4">{formatDate(session.uploadedAt)}</p>
+          {filteredAndSortedSessions.map((session) => {
+            const videoId = session.videoName.split('.')[0];
+            return (
+              <div key={videoId} className="bg-gray-800 rounded-lg shadow-lg p-6 cursor-pointer hover:bg-gray-700" onClick={() => handleVideoClick(videoId)}>
+                <div className="flex justify-between items-center">
+                  <h2 className="text-xl font-semibold text-blue-300 capitalize mb-2">{session.exercise}</h2>
+                  <p className="text-sm text-gray-400 mb-4">{formatDate(session.uploadedAt)}</p>
+                </div>
+                <div className="space-y-2">
+                  <p><span className="font-semibold">Load:</span> {session.load} kg</p>
+                  <p><span className="font-semibold">Weight:</span> {session.weight} kg</p>
+                  <p className="text-sm text-gray-500 truncate"><span className="font-semibold">Video ID:</span> {videoId}</p>
+                </div>
               </div>
-              <div className="space-y-2">
-                <p><span className="font-semibold">Load:</span> {session.load} kg</p>
-                <p><span className="font-semibold">Weight:</span> {session.weight} kg</p>
-                <p className="text-sm text-gray-500 truncate"><span className="font-semibold">File:</span> {session.videoName}</p>
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
